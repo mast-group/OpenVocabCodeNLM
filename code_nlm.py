@@ -6,7 +6,6 @@ from __future__ import print_function
 
 import time
 from datetime import timedelta
-import logging
 
 import inspect
 import math
@@ -133,6 +132,8 @@ class NLM(object):
       rnn_layers = tf.contrib.rnn.MultiRNNCell([drop_cell() for _ in range(self.num_layers)], state_is_tuple=True)
       # Initialize the state to zero.
       self.reset_state = rnn_layers.zero_state(batch_size, data_type())
+      self.outputs, self.next_state = tf.nn.dynamic_rnn(rnn_layers, self.embedded_inputds, time_major=False,
+                                                        initial_state=self.reset_state)
 
     with tf.name_scope("Cost"):
       self.output = tf.reshape(tf.concat(axis=0, values=self.outputs), [-1, hidden_size])
@@ -901,9 +902,9 @@ class NLM(object):
 
   def completion(self, session, config, test_dataset, test_projects, beam_size, dynamic=False):
     """
-    Runs code the code completion scenario. Dynamic update can be .
+    Runs code the code completion scenario. Dynamic update can be performed but by default is turned off.
     :param session: The TF session in which operations should be run.
-    :param config:
+    :param config: The configuration to be used for the model.
     :param test_dataset:
     :param test_projects: To which project does each instance belong to. Should be a list of strings.
     :param beam_size: The size of the beam to be used by the search algorithm.
@@ -1173,15 +1174,15 @@ class NLM(object):
 
   def maintenance_completion(self, session, config, test_lines, test_projects, train_vocab, train_vocab_rev, beam_size):
     """
-
-    :param session:
-    :param config:
-    :param test_lines:
-    :param test_projects:
-    :param train_vocab:
-    :param train_vocab_rev:
-    :param beam_size:
-    :return:
+    Runs the code completion for the maintenance scenario.
+    :param session: The TF session in which operations should be run.
+    :param config: The configuration to be used for the model.
+    :param test_lines: A list containing each test file.
+    :param test_projects: A list containing the test project name for each file.
+    :param train_vocab: The word to id mapping.
+    :param train_vocab_rev: The id to word mapping.
+    :param beam_size: The size of the beam to be used by the search algorithm.
+    :return: MRR for the test set.
     """
     # If checkpoint does not exist throw an exception
     ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
@@ -1267,7 +1268,6 @@ class NLM(object):
                 for i, (c, h) in enumerate(self.reset_state):
                   feed_dict[c] = state[i].c
                   feed_dict[h] = state[i].h
-                  # print("state number " + str(i))
               _, cost, state, loss, iteration = session.run(
                 [self.train_step, self.cost, self.next_state, self.loss, self.iteration], feed_dict)
               epoch_log_perp_unnorm += np.sum(loss)
@@ -1279,9 +1279,6 @@ class NLM(object):
             print(train_perplexity)
             checkpoint_path = os.path.join(partition_path, "model")
             self.saver.save(session, checkpoint_path, global_step=self.global_step)
-
-            # checkpoint_path = os.path.join(FLAGS.train_dir, "lm.ckpt.epoch" + str(epoch))
-            # self.saver.save(session, checkpoint_path, global_step=self.global_step)
           except (StopTrainingException, KeyboardInterrupt):
             print("Finished training ........")
 
@@ -1423,7 +1420,6 @@ class NLM(object):
                 remember_state = state
                 logits = norm_logits[0]
                 correct_token = correct_word
-                # print(logits[target], test_dataset.rev_vocab[target], rank)
               else:
                 correct_token += correct_word
                 in_token = False
@@ -1477,14 +1473,12 @@ class NLM(object):
                 candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word[:-2], -prob, '')))
               if len(candidates_pq) >= beam_size:
                 break
-            # print(len(pq))
             heapq.heapify(candidates_pq)
             full_tokens_scored = 0
 
             # Keep creating candidates until 5000 have been created or total probability mass has exceeded satisfaction_prob
             # Search can stop earlier if the best current candidate has score worst than that
             # of the worst one of the initial full_tokens since it would be pointless to further continue the search
-            expansion_iterations = 0
             search_iterations = 0
             while full_tokens_scored < 5000 and prob_mass <= satisfaction_prob and search_iterations < 8:
               search_iterations += 1
@@ -1492,21 +1486,14 @@ class NLM(object):
               to_expand = []
               new_state = (np.empty([beam_size, config.hidden_size]),)
               for c_id in range(beam_size):
-                # print(len(candidates_pq))
                 if len(candidates_pq) == 0:
                   break
                 to_expand.append(heapq.heappop(candidates_pq))
                 new_state[0][c_id] = to_expand[-1][1].get_state_vec()
 
-              # print(to_expand[0][1].get_parent_prob(), to_expand[-1][1].get_parent_prob(), worst_full_score)
-              # if len(to_expand) == 0: break
               if len(to_expand) < beam_size: break
-              # print(to_expand[0], -to_expand[0][1].get_parent_prob(),
-              #       to_expand[-1], -to_expand[-1][1].get_parent_prob(), worst_full_score)
               if -to_expand[0][1].get_parent_prob() < worst_full_score:
                 break
-              # if correct_token == 'teemu':
-              #   print('teemu and pumba')
 
               feed_dict = {self.inputd: np.array([[candidate.get_id()] for (score, candidate) in to_expand]),
                            self.keep_probability: 1.0
@@ -1565,8 +1552,6 @@ class NLM(object):
             if FLAGS.gru:
               for i, h in enumerate(self.reset_state):
                 feed_dict[h] = train_state[i]
-                # print('i', i, state[0].shape)
-                # print(test_dataset.rev_vocab[target])
             else:
               for i, (c, h) in enumerate(self.reset_state):
                 feed_dict[c] = train_state[i].c
@@ -1578,10 +1563,8 @@ class NLM(object):
           sys.stdout.flush()
         except (StopTrainingException, KeyboardInterrupt):
           print("Finished training ........")
-      # if proj_id >= 5: break
 
       print("Projects Done:", proj_id + 1)
-
     return mrr / tokens_done
 
 
@@ -1618,7 +1601,7 @@ def calculate_predictability(test_lines, train_vocab, train_vocab_rev, config, o
   :param config:
   :param output_path:
   :param model:
-  :param session:
+  :param session: The TF session in which operations should be run.
   :return:
   """
   config.batch_size = config.test_batch_size
@@ -1859,7 +1842,7 @@ class ExitCriteria(object):
 
 class Candidate(object):
   """
-
+  Represents a code completion search candidate.
   """
   def __init__(self, state_vec, id, token_text, parent_prob, subtoken_history):
     self._state_vec = state_vec
