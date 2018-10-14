@@ -61,6 +61,8 @@ flags.DEFINE_boolean("bidirectional", False, "Bidirectional model.")
 flags.DEFINE_boolean("word_level_perplexity", False, "Convert to word level perplexity.")
 flags.DEFINE_boolean("cross_entropy", False, "Print cross-entropy for validation/test instead of perplexity.")
 flags.DEFINE_boolean("token_model", False, "Whether it is a token level model.")
+flags.DEFINE_boolean("completion_unk_wrong", False, "Whether completing -UNK- should contribute in MRR. Set to "
+                                                    "True for Allamanis et al. heuristic subtoken model.")
 
 FLAGS = flags.FLAGS
 
@@ -923,7 +925,7 @@ class NLM(object):
 
     raw_data = test_dataset.data  # is just one long array
     data_len = len(raw_data)
-    print(data_len)
+    print('Data Length:', data_len)
     data_covered = 0
     end_file_id = test_dataset.vocab["-eod-"]
     start_index = 0
@@ -949,7 +951,7 @@ class NLM(object):
 
       file_data = raw_data[file_start_index:data_covered]
       file_start_index = data_covered
-      print(len(file_data))
+      print('Completion Length:', len(file_data))
 
       # New file so empty the cache
       ngram_cache = dict()
@@ -961,7 +963,6 @@ class NLM(object):
       in_token = False
 
       correct_token = ''
-      seen = set()
       to_add = []
       for subtoken_id, context_target in enumerate(zip(file_data[:-1], file_data[1:])):
         context, target = context_target
@@ -1004,6 +1005,7 @@ class NLM(object):
         norm_logits, loss, cost, state = session.run([self.norm_logits, self.loss, self.cost, self.next_state], feed_dict)
 
         correct_word = test_dataset.rev_vocab[target]
+        if verbose: print('Correct:', correct_word)
 
         if correct_word.endswith('@@'):
           if not in_token:
@@ -1022,6 +1024,7 @@ class NLM(object):
             correct_subtokens = []
             remember_state = state
             logits = norm_logits[0]
+            correct_token = correct_word
           else:
             correct_token += correct_word
             in_token = False
@@ -1045,16 +1048,18 @@ class NLM(object):
             prob_mass += prob
             if complete_done >= top_needed:
               break
-        # print(full_tokens)
+              if verbose: print(full_tokens)
 
         # Probability mass greater than satisfaction_prob so output this prediction
         if prob_mass > satisfaction_prob or counted == top_needed:
           rank = 0
           correct_found = False
-          if verbose: print(correct_token)
+          if verbose: print('correct_token:', correct_token)
           for prob, prediction in full_tokens:
             if FLAGS.token_model and correct_token == '-UNK-':
               break
+            if correct_token == '-UNK-' and FLAGS.completion_unk_wrong:
+                break
             if verbose: print(prob, prediction)
             if not correct_found:
               rank += 1
@@ -1135,7 +1140,7 @@ class NLM(object):
                                                                    (test_dataset.rev_vocab[id],))))
 
         # Get top and count rank of correct answer
-        if verbose: print(correct_token)
+        if verbose: print('Correct_token:', correct_token)
         full_tokens.sort(reverse=True)
         for i, answer in enumerate(full_tokens):
           prob, prediction = answer
@@ -1167,7 +1172,6 @@ class NLM(object):
           [self.train_step, self.cost, self.next_state, self.loss, self.iteration], feed_dict)
 
       print(files_done, 'MRR:', mrr / tokens_done)
-      print(len(seen))
 
     print('Tokens scored:', tokens_done)
     return mrr / tokens_done
