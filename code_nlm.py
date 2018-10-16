@@ -963,17 +963,21 @@ class NLM(object):
       in_token = False
 
       correct_token = ''
-      to_add = []
+      train_start = 0
+      train_end = 0
+      # to_add = []
       for subtoken_id, context_target in enumerate(zip(file_data[:-1], file_data[1:])):
         context, target = context_target
+        train_end += 1
 
-        to_add.append(test_dataset.rev_vocab[context])
-        if (subtoken_id - 1) % train_every == 0 and subtoken_id > train_every:
+        # to_add.append(test_dataset.rev_vocab[context])
+        if (subtoken_id - 1) - train_start > train_every and not test_dataset.rev_vocab[context].endswith('@@'):
           # train
           if dynamic:
-            tr_context, tr_target, tr_target_weights = file_data[subtoken_id - train_every - 1 : subtoken_id - 1], \
-                                                       file_data[subtoken_id - train_every:subtoken_id], [1.0] * train_every
-            start_train_at = subtoken_id
+            tr_context, tr_target, tr_target_weights = file_data[train_start : subtoken_id - 1], \
+                                                       file_data[train_start + 1 : subtoken_id], \
+                                                       [1.0] * ((subtoken_id - 1) - train_start)
+            # start_train_at = subtoken_id
             feed_dict = {self.inputd: np.tile(tr_context, (self.batch_size, 1)),
                           self.targets: np.tile(tr_target, (self.batch_size, 1)),
                           self.target_weights: np.tile(tr_target_weights, (self.batch_size, 1)),
@@ -989,6 +993,7 @@ class NLM(object):
                 feed_dict[h] = train_state[i].h
             _, cost, train_state, loss, iteration = session.run(
               [self.train_step, self.cost, self.next_state, self.loss, self.iteration], feed_dict)
+          train_start = train_end
 
         feed_dict = {self.inputd: np.array([[context]] * self.batch_size),
                      self.targets: np.array([[target]] * self.batch_size),
@@ -1152,9 +1157,9 @@ class NLM(object):
       files_done += 1
 
       # Train on remainder
-      if dynamic and len(file_data) - start_train_at > 1:
-        tr_context, tr_target, tr_target_weights = file_data[start_train_at : -1], file_data[start_train_at + 1:], \
-                                                   [1.0] * len(file_data[start_train_at : -1])
+      if dynamic and len(file_data) - train_start > 1:
+        tr_context, tr_target, tr_target_weights = file_data[train_start : -1], file_data[train_start + 1:], \
+                                                   [1.0] * len(file_data[train_start : -1])
         feed_dict = {self.inputd: np.tile(tr_context, (self.batch_size, 1)),
                      self.targets: np.tile(tr_target, (self.batch_size, 1)),
                      self.target_weights: np.tile(tr_target_weights, (self.batch_size, 1)),
@@ -1363,16 +1368,19 @@ class NLM(object):
           train_state = session.run(self.reset_state)
           in_token = False
           correct_token = ''
+          train_start = 0
+          train_end = 0
 
           # Reset the LSTM state to zeros and train
           for subtoken_id, context_target in enumerate(zip(ids[:-1], ids[1:])):
             context, target = context_target
+            train_end += 1
 
-            if (subtoken_id - 1) % train_every == 0 and subtoken_id > train_every:
+            if (subtoken_id - 1) - train_start > train_every and not train_vocab_rev[context].endswith('@@'):
               # train
-              tr_context, tr_target, tr_target_weights = ids[subtoken_id - train_every - 1 : subtoken_id - 1], \
-                                                         ids[subtoken_id - train_every : subtoken_id], \
-                                                         [1.0] * train_every
+              tr_context, tr_target, tr_target_weights = ids[train_start: subtoken_id - 1], \
+                                                         ids[train_start + 1: subtoken_id], \
+                                                         [1.0] * ((subtoken_id - 1) - train_start)
               start_train_at = subtoken_id
               feed_dict = {self.inputd: np.tile(tr_context, (self.batch_size, 1)),
                            self.targets: np.tile(tr_target, (self.batch_size, 1)),
@@ -1389,6 +1397,7 @@ class NLM(object):
                   feed_dict[h] = train_state[i].h
               _, cost, train_state, loss, iteration = session.run(
                 [self.train_step, self.cost, self.next_state, self.loss, self.iteration], feed_dict)
+            train_start = train_end
 
             feed_dict = {self.inputd: np.array([[context]] * self.batch_size),
                          self.targets: np.array([[target]] * self.batch_size),
@@ -1545,14 +1554,15 @@ class NLM(object):
           pass
           # Train on remainder
           if len(ids) - start_train_at > 1:
-            tr_context, tr_target, tr_target_weights = ids[start_train_at: -1], ids[start_train_at + 1:], \
-                                                       [1.0] * len(ids[start_train_at: -1])
+            tr_context, tr_target, tr_target_weights = ids[train_start : -1], \
+                                                       ids[train_start + 1 : ], \
+                                                       [1.0] * len(ids[train_start : -1])
             feed_dict = {self.inputd: np.tile(tr_context, (self.batch_size, 1)),
                          self.targets: np.tile(tr_target, (self.batch_size, 1)),
                          self.target_weights: np.tile(tr_target_weights, (self.batch_size, 1)),
                          self.learning_rate: config.learning_rate,
                          self.keep_probability: config.keep_prob
-                         }
+                        }
             if FLAGS.gru:
               for i, h in enumerate(self.reset_state):
                 feed_dict[h] = train_state[i]
