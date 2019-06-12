@@ -1713,6 +1713,8 @@ def main(_):
       with tf.Graph().as_default():
         with tf.Session(config=get_gpu_config()) as session:
           model = create_model(session, config)
+          model.train_vocab = train_vocab
+          model.train_vocab_rev = train_vocab_rev
           ppl = calculate_predictability(test_lines, train_vocab, train_vocab_rev, config, '', model, session)
       print("Average:", ppl)
       print("Total time %s" % timedelta(seconds=time.time() - start_time))
