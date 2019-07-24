@@ -353,7 +353,8 @@ class NLM(object):
 
       if FLAGS.token_model:
         targets = [t for tar in target for t in tar]
-        loss = [-math.log(1.0/len(self.train_vocab), 2) if t == self.train_vocab["-UNK-"] else l
+        voc_size = 10500000
+        loss = [-math.log(1.0/voc_size, 2) if t == self.train_vocab["-UNK-"] else l
                 for l,t in zip(loss, targets) ]
 
       log_perp_unnorm += np.sum(loss)
@@ -1589,11 +1590,11 @@ class NLM(object):
     :return:
     """
     parameters = {
-      "num_layers": self.num_layers,
-      "vocab_size": self.vocab_size,
-      "hidden_size": self.hidden_size,
-      "keep_probability": self.keep_probability,
-      "total_parameters": self.get_parameter_count()
+      "num_layers": str(self.num_layers),
+      "vocab_size": str(self.vocab_size),
+      "hidden_size": str(self.hidden_size),
+      "keep_probability": str(self.keep_probability),
+      "total_parameters": str(self.get_parameter_count())
     }
     with open(self.parameters_file(model_directory), "w") as f:
       json.dump(parameters, f, indent=4)
@@ -1770,6 +1771,7 @@ def main(_):
       # Default test scenario. Essentially entropy/perplexity calculation.
       vocab_path = FLAGS.train_dir + "/vocab.txt"
       train_vocab, train_vocab_rev = reader._read_vocab(vocab_path)
+      print(len(train_vocab))
       config.vocab_size = len(train_vocab)
       start_time = time.time()
       do_test(FLAGS.data_path + "/" + FLAGS.test_filename, train_vocab, train_vocab_rev, config)
@@ -1840,6 +1842,8 @@ def main(_):
       with tf.Graph().as_default():
         with tf.Session(config=get_gpu_config()) as session:
           md = create_model(session, config)
+          md.train_vocab = train_vocab
+          md.train_vocab_rev = train_vocab_rev
           md.write_model_parameters(FLAGS.train_dir)
           md.train(session, config, train_dataset, exit_criteria, valid_dataset, FLAGS.train_dir)
       print("Total time %s" % timedelta(seconds=time.time() - start_time))
