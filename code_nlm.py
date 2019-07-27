@@ -978,8 +978,8 @@ class NLM(object):
       train_start = 0
       train_end = 0
       # to_add = []
-      for subtoken_id, context_target, is_id in enumerate(zip(file_data[:-1], file_data[1:], file_ids)):
-        context, target = context_target
+      for subtoken_id, context_target_is_id in enumerate(zip(file_data[:-1], file_data[1:], file_ids)):
+        context, target, is_id = context_target_is_id
         train_end += 1
 
         # to_add.append(test_dataset.rev_vocab[context])
