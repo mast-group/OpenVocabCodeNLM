@@ -1088,7 +1088,7 @@ class NLM(object):
               if verbose: print('MRR:', mrr / tokens_done)
               if verbose: print()
               
-              if not id_map is None and is_id:
+              if is_id:
                 id_mrr += 1.0 / rank
                 if rank <= 1:
                   id_acc1 += 1.0
@@ -1180,7 +1180,7 @@ class NLM(object):
             if verbose: print('MRR:', mrr / tokens_done)
             if verbose: print()
             
-            if not id_map is None and is_id:
+            if is_id:
               id_mrr += 1.0 / (i + 1)
               if (i + 1) <= 1:
                 id_acc1 += 1.0
