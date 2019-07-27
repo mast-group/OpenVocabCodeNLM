@@ -1840,7 +1840,7 @@ def main(_):
             id_map = []
             with open(FLAGS.identifier_map, 'r') as f:
               for line in f:
-                id_map.append(list(line.rstip('\n')))
+                id_map.append(list(line.rstrip('\n')))
 
           mrr = model.completion(session, config, test_dataset, test_proj_lines, config.batch_size, \
             FLAGS.dynamic, id_map)
