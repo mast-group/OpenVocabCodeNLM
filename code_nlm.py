@@ -33,8 +33,7 @@ flags.DEFINE_boolean("maintenance_test", False, "Set to True for performing main
 flags.DEFINE_boolean("completion", False, "Set to True to run code completion experiment.")
 flags.DEFINE_boolean("maintenance_completion", False, "Set to True to run maintenance code completion experiment")
 flags.DEFINE_boolean("dynamic", False, "Set to True to run dynamic code completion experiment.")
-flags.DEFINE_integer("num_layers", 1, "Number of Layers. Using a single layer is advised.")
-flags.DEFINE_integer("hidden_size", 512, "Hidden size. Number of dimensions for the embeddings and RNN hidden state.")
+flags.DEFINE_boolean("id_completion", False, "Set to True to run code completion on identifiers experiment.")
 
 flags.DEFINE_string("train_filename", None, "The train file on which to train.")
 flags.DEFINE_string("validation_filename", None, "The test file on which to run validation.")
@@ -42,6 +41,8 @@ flags.DEFINE_string("test_filename", None, "The test file on which to compute pe
 flags.DEFINE_string("test_proj_filename", None, "The file that contains the test project name for each test instance.")
 flags.DEFINE_string("output_probs_file", "predictionProbabilities.txt", "The file to store output probabilities.")
 
+flags.DEFINE_integer("num_layers", 1, "Number of Layers. Using a single layer is advised.")
+flags.DEFINE_integer("hidden_size", 512, "Hidden size. Number of dimensions for the embeddings and RNN hidden state.")
 flags.DEFINE_float("keep_prob", 0.5, "Keep probability = 1.0 - dropout probability.")
 flags.DEFINE_integer("vocab_size", 25000, "Vocabulary size")
 flags.DEFINE_integer("steps_per_checkpoint", 1000, "Number of steps for printing stats (validation is run) and checkpointing the model. Must be increased by 'a lot' for large training corpora.")
