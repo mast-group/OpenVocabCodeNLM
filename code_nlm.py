@@ -33,12 +33,12 @@ flags.DEFINE_boolean("maintenance_test", False, "Set to True for performing main
 flags.DEFINE_boolean("completion", False, "Set to True to run code completion experiment.")
 flags.DEFINE_boolean("maintenance_completion", False, "Set to True to run maintenance code completion experiment")
 flags.DEFINE_boolean("dynamic", False, "Set to True to run dynamic code completion experiment.")
-flags.DEFINE_boolean("id_completion", False, "Set to True to run code completion on identifiers experiment.")
 
 flags.DEFINE_string("train_filename", None, "The train file on which to train.")
 flags.DEFINE_string("validation_filename", None, "The test file on which to run validation.")
 flags.DEFINE_string("test_filename", None, "The test file on which to compute perplexity or predictability.")
 flags.DEFINE_string("test_proj_filename", None, "The file that contains the test project name for each test instance.")
+flags.DEFINE_string("identifier_map", None, "The file that contains information about which tokens are identifiers.")
 flags.DEFINE_string("output_probs_file", "predictionProbabilities.txt", "The file to store output probabilities.")
 
 flags.DEFINE_integer("num_layers", 1, "Number of Layers. Using a single layer is advised.")
@@ -904,7 +904,7 @@ class NLM(object):
     print('Is it correct perplexity:', sum([perp * weight for perp, weight in zip(test_losses, len_weights)]))
     return test_losses_sum / ctr
 
-  def completion(self, session, config, test_dataset, test_projects, beam_size, dynamic=False):
+  def completion(self, session, config, test_dataset, test_projects, beam_size, dynamic=False, id_map=None):
     """
     Runs code the code completion scenario. Dynamic update can be performed but by default is turned off.
     :param session: The TF session in which operations should be run.
@@ -916,6 +916,12 @@ class NLM(object):
     :return:
     """
     mrr = 0.0
+    id_mrr = 0.0
+    id_acc1 = 0.0
+    id_acc3 = 0.0
+    id_acc5 = 0.0
+    id_acc10 = 0.0
+
     satisfaction_prob = 0.8
     top_needed = 10
     verbose = False
@@ -923,8 +929,9 @@ class NLM(object):
     train_every = config.num_steps
     tokens_done = 0
     files_done = 0
+    identifiers = 0
     state = session.run(self.reset_state)
-
+    
     raw_data = test_dataset.data  # is just one long array
     data_len = len(raw_data)
     print('Data Length:', data_len)
@@ -955,8 +962,11 @@ class NLM(object):
       file_start_index = data_covered
       print('Completion Length:', len(file_data))
 
+      if not id_map is None: file_ids = id_map[files_done] + [0]
+      else: file_ids = [0] * (len(file_data) - 1)
+
       # New file so empty the cache
-      ngram_cache = dict()
+      # ngram_cache = dict()
       tokens_before = deque([None, test_dataset.rev_vocab[file_data[0]]], 2)
 
       state = session.run(self.reset_state)
@@ -968,7 +978,7 @@ class NLM(object):
       train_start = 0
       train_end = 0
       # to_add = []
-      for subtoken_id, context_target in enumerate(zip(file_data[:-1], file_data[1:])):
+      for subtoken_id, context_target, is_id in enumerate(zip(file_data[:-1], file_data[1:], file_ids)):
         context, target = context_target
         train_end += 1
 
@@ -1027,6 +1037,8 @@ class NLM(object):
           continue
         else:
           tokens_done += 1
+          if not id_map is None and is_id:
+            identifiers += 1
           if not in_token:
             correct_subtokens = []
             remember_state = state
@@ -1075,6 +1087,17 @@ class NLM(object):
               correct_found = True
               if verbose: print('MRR:', mrr / tokens_done)
               if verbose: print()
+              
+              if not id_map is None and is_id:
+                id_mrr += 1.0 / rank
+                if rank <= 1:
+                  id_acc1 += 1.0
+                if rank <= 3:
+                  id_acc3 += 1.0
+                if rank <= 5:
+                  id_acc5 += 1.0
+                if rank <= 10:
+                  id_acc10 += 1.0
           continue
         if FLAGS.token_model: print('???')
 
@@ -1156,6 +1179,17 @@ class NLM(object):
             mrr += 1.0 / (i + 1)
             if verbose: print('MRR:', mrr / tokens_done)
             if verbose: print()
+            
+            if not id_map is None and is_id:
+              id_mrr += 1.0 / (i + 1)
+              if (i + 1) <= 1:
+                id_acc1 += 1.0
+              if (i + 1) <= 3:
+                id_acc3 += 1.0
+              if (i + 1) <= 5:
+                id_acc5 += 1.0
+              if (i + 1) <= 10:
+                id_acc10 += 1.0
       files_done += 1
 
       # Train on remainder
@@ -1179,6 +1213,9 @@ class NLM(object):
           [self.train_step, self.cost, self.next_state, self.loss, self.iteration], feed_dict)
 
       print(files_done, 'MRR:', mrr / tokens_done)
+      if not id_map is None :
+        print(id_mrr / identifiers, id_acc1 / identifiers, id_acc3 / identifiers, \
+          id_acc5 / identifiers, id_acc10 / identifiers)
 
     print('Tokens scored:', tokens_done)
     return mrr / tokens_done
@@ -1797,7 +1834,16 @@ def main(_):
           model = create_model(session, config)
           model.train_vocab = train_vocab
           model.train_vocab_rev = train_vocab_rev
-          mrr = model.completion(session, config, test_dataset, test_proj_lines, config.batch_size, FLAGS.dynamic)
+
+          id_map = None
+          if FLAGS.identifier_map:
+            id_map = []
+            with open(FLAGS.identifier_map, 'r') as f:
+              for line in f:
+                id_map.append(list(line.rstip('\n')))
+
+          mrr = model.completion(session, config, test_dataset, test_proj_lines, config.batch_size, \
+            FLAGS.dynamic, id_map)
           print(mrr)
       print("Total time %s" % timedelta(seconds=time.time() - start_time))
       print("Done completion!")
