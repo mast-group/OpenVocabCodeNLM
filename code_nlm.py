@@ -1070,7 +1070,7 @@ class NLM(object):
         for id, prob in sorted:
           if cache_ids:
             word = test_dataset.rev_vocab[id]
-            if id_cache.has_key() or prob >= SKIP_CACHE_PROB_THRESHOLD:
+            if id_cache.has_key(word) or prob >= SKIP_CACHE_PROB_THRESHOLD:
               counted += 1
               if not word.endswith('@@'):
                 complete_done += 1
