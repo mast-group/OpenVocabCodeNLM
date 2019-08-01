@@ -16,6 +16,7 @@ import os.path
 import sys
 import shutil
 import heapq
+import pygtrie as trie
 
 from collections import deque
 from itertools import chain
@@ -41,6 +42,7 @@ flags.DEFINE_string("validation_filename", None, "The test file on which to run 
 flags.DEFINE_string("test_filename", None, "The test file on which to compute perplexity or predictability.")
 flags.DEFINE_string("test_proj_filename", None, "The file that contains the test project name for each test instance.")
 flags.DEFINE_string("identifier_map", None, "The file that contains information about which tokens are identifiers.")
+flags.DEFINE_boolean("cache_ids", False, "Set to True to cache project identifiers during completion.")
 flags.DEFINE_string("output_probs_file", "predictionProbabilities.txt", "The file to store output probabilities.")
 
 flags.DEFINE_integer("num_layers", 1, "Number of Layers. Using a single layer is advised.")
@@ -906,7 +908,7 @@ class NLM(object):
     print('Is it correct perplexity:', sum([perp * weight for perp, weight in zip(test_losses, len_weights)]))
     return test_losses_sum / ctr
 
-  def completion(self, session, config, test_dataset, test_projects, beam_size, dynamic=False, id_map=None):
+  def completion(self, session, config, test_dataset, test_projects, beam_size, dynamic=False, id_map=None, cache_ids=False):
     """
     Runs code the code completion scenario. Dynamic update can be performed but by default is turned off.
     :param session: The TF session in which operations should be run.
@@ -934,6 +936,9 @@ class NLM(object):
     identifiers = 0
     state = session.run(self.reset_state)
     
+    id_cache = trie.CharTrie()
+    SKIP_CACHE_PROB_THRESHOLD = 0.3
+
     raw_data = test_dataset.data  # is just one long array
     data_len = len(raw_data)
     print('Data Length:', data_len)
@@ -958,6 +963,10 @@ class NLM(object):
           ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
           if ckpt and tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
             self.saver.restore(session, ckpt.model_checkpoint_path)
+          
+          # Reset the project's cache of identifiers if one is used.
+          if cache_ids:
+            id_cache.clear()
         last_test_project = test_project
 
       file_data = raw_data[file_start_index:data_covered]
@@ -967,8 +976,6 @@ class NLM(object):
       if not id_map is None: file_ids = id_map[files_done] + [0]
       else: file_ids = [0] * (len(file_data) - 1)
 
-      # New file so empty the cache
-      # ngram_cache = dict()
       tokens_before = deque([None, test_dataset.rev_vocab[file_data[0]]], 2)
 
       state = session.run(self.reset_state)
@@ -1061,15 +1068,27 @@ class NLM(object):
         prob_mass = 0.0
         counted = 0
         for id, prob in sorted:
-          counted += 1
-          word = test_dataset.rev_vocab[id]
-          if not word.endswith('@@'):
-            complete_done += 1
-            full_tokens.append((prob, word))
-            prob_mass += prob
-            if complete_done >= top_needed:
-              break
-              if verbose: print(full_tokens)
+          if cache_ids:
+            word = test_dataset.rev_vocab[id]
+            if id_cache.has_key() or prob >= SKIP_CACHE_PROB_THRESHOLD:
+              counted += 1
+              if not word.endswith('@@'):
+                complete_done += 1
+                full_tokens.append((prob, word))
+                prob_mass += prob
+                if complete_done >= top_needed:
+                  break
+                  if verbose: print(full_tokens)
+          else:
+            counted += 1
+            word = test_dataset.rev_vocab[id]
+            if not word.endswith('@@'):
+              complete_done += 1
+              full_tokens.append((prob, word))
+              prob_mass += prob
+              if complete_done >= top_needed:
+                break
+                if verbose: print(full_tokens)
 
         # Probability mass greater than satisfaction_prob so output this prediction
         if prob_mass > satisfaction_prob or counted == top_needed:
@@ -1100,6 +1119,8 @@ class NLM(object):
                   id_acc5 += 1.0
                 if rank <= 10:
                   id_acc10 += 1.0
+          if correct_token != '-UNK-': 
+            id_cache[correct_token] = True
           continue
         if FLAGS.token_model: print('???')
 
@@ -1112,9 +1133,15 @@ class NLM(object):
         for id, prob in sorted:
           word = test_dataset.rev_vocab[id]
           if word.endswith('@@'):
-            # All the initial state vectors are the same so the first is used
-            candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word[:-2], -prob,
-                                                   tuple(tokens_before) + (word,))))
+            if cache_ids:
+              if id_cache.has_subtrie(word[-2]) or prob >= SKIP_CACHE_PROB_THRESHOLD:
+                # All the initial state vectors are the same so the first is used
+                candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word[:-2], -prob,
+                                                      tuple(tokens_before) + (word,))))
+            else:
+              # All the initial state vectors are the same so the first is used
+              candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word[:-2], -prob,
+                                                    tuple(tokens_before) + (word,))))
           if len(candidates_pq) >= beam_size:
             break
         heapq.heapify(candidates_pq)
@@ -1159,20 +1186,36 @@ class NLM(object):
             for i in range(beam_size):
               id, prob = sorted[i]
               new_prob = candidate.get_parent_prob() * prob
-              if not test_dataset.rev_vocab[id].endswith('@@'):
-                full_tokens_scored += 1
-                prob_mass += -new_prob
-                heapq.heappushpop(full_tokens, (-new_prob, candidate.get_text() + test_dataset.rev_vocab[id]))
-                worst = heapq.nsmallest(1, full_tokens)
-                worst_full_score = worst[0][0]
+              if cache_ids:
+                if not test_dataset.rev_vocab[id].endswith('@@'):
+                  if id_cache.has_key(candidate.get_text() + test_dataset.rev_vocab[id]) or new_prob >= SKIP_CACHE_PROB_THRESHOLD:
+                    full_tokens_scored += 1
+                    prob_mass += -new_prob
+                    heapq.heappushpop(full_tokens, (-new_prob, candidate.get_text() + test_dataset.rev_vocab[id]))
+                    worst = heapq.nsmallest(1, full_tokens)
+                    worst_full_score = worst[0][0]
+                  else:
+                    word = test_dataset.rev_vocab[id][:-2]
+                    if id_cache.has_subtrie(candidate.get_text() + word) or new_prob >= SKIP_CACHE_PROB_THRESHOLD:
+                      heapq.heappush(candidates_pq, (new_prob, Candidate(new_state[0][c_id], id, candidate.get_text() + word,
+                                                                        new_prob, tuple(candidate.get_subtoken_history()) +
+                                                                        (test_dataset.rev_vocab[id],))))
               else:
-                word = test_dataset.rev_vocab[id][:-2]
-                heapq.heappush(candidates_pq, (new_prob, Candidate(new_state[0][c_id], id, candidate.get_text() + word,
-                                                                   new_prob, tuple(candidate.get_subtoken_history()) +
-                                                                   (test_dataset.rev_vocab[id],))))
+                if not test_dataset.rev_vocab[id].endswith('@@'):
+                  full_tokens_scored += 1
+                  prob_mass += -new_prob
+                  heapq.heappushpop(full_tokens, (-new_prob, candidate.get_text() + test_dataset.rev_vocab[id]))
+                  worst = heapq.nsmallest(1, full_tokens)
+                  worst_full_score = worst[0][0]
+                else:
+                  word = test_dataset.rev_vocab[id][:-2]
+                  heapq.heappush(candidates_pq, (new_prob, Candidate(new_state[0][c_id], id, candidate.get_text() + word,
+                                                                    new_prob, tuple(candidate.get_subtoken_history()) +
+                                                                    (test_dataset.rev_vocab[id],))))
 
         # Get top and count rank of correct answer
         if verbose: print('Correct_token:', correct_token)
+        if cache_ids: id_cache[correct_token] = True
         full_tokens.sort(reverse=True)
         for i, answer in enumerate(full_tokens):
           prob, prediction = answer
@@ -1845,7 +1888,7 @@ def main(_):
                 id_map.append(ast.literal_eval(line.rstrip('\n')))
 
           mrr = model.completion(session, config, test_dataset, test_proj_lines, config.batch_size, \
-            FLAGS.dynamic, id_map)
+            FLAGS.dynamic, id_map, FLAGS.cache_ids)
           print(mrr)
       print("Total time %s" % timedelta(seconds=time.time() - start_time))
       print("Done completion!")
