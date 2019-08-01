@@ -937,7 +937,7 @@ class NLM(object):
     state = session.run(self.reset_state)
     
     id_cache = trie.CharTrie()
-    SKIP_CACHE_PROB_THRESHOLD = 0.3
+    SKIP_CACHE_PROB_THRESHOLD = 0.2
 
     raw_data = test_dataset.data  # is just one long array
     data_len = len(raw_data)
@@ -1070,9 +1070,9 @@ class NLM(object):
         for id, prob in sorted:
           if cache_ids:
             word = test_dataset.rev_vocab[id]
-            if id_cache.has_key(word) or prob >= SKIP_CACHE_PROB_THRESHOLD:
-              counted += 1
-              if not word.endswith('@@'):
+            counted += 1
+            if not word.endswith('@@'):
+              if id_cache.has_key(word) or prob >= SKIP_CACHE_PROB_THRESHOLD:
                 complete_done += 1
                 full_tokens.append((prob, word))
                 prob_mass += prob
@@ -1125,7 +1125,8 @@ class NLM(object):
         if FLAGS.token_model: print('???')
 
         # Remember the score of the worst one out of the top_needed (usually 10) full_token candidates
-        worst_full_score = full_tokens[-1][0]
+        if len(full_tokens) > 0: worst_full_score = full_tokens[-1][0]
+        else:  worst_full_score = 0.0
         # Create a priority queue to rank predictions and continue the search
         heapq.heapify(full_tokens)
         # Now find beam_size best candidates to initialize the search
