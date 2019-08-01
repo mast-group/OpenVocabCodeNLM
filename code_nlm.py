@@ -1237,6 +1237,7 @@ class NLM(object):
               if (i + 1) <= 10:
                 id_acc10 += 1.0
       files_done += 1
+      print(id_cache)
 
       # Train on remainder
       if dynamic and len(file_data) - train_start > 1:
