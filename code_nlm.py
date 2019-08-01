@@ -1068,7 +1068,7 @@ class NLM(object):
         prob_mass = 0.0
         counted = 0
         for id, prob in sorted:
-          if cache_ids:
+          if cache_ids and is_id:
             word = test_dataset.rev_vocab[id]
             counted += 1
             if not word.endswith('@@'):
@@ -1134,7 +1134,7 @@ class NLM(object):
         for id, prob in sorted:
           word = test_dataset.rev_vocab[id]
           if word.endswith('@@'):
-            if cache_ids:
+            if cache_ids and is_id:
               if id_cache.has_subtrie(word[-2]) or prob >= SKIP_CACHE_PROB_THRESHOLD:
                 # All the initial state vectors are the same so the first is used
                 candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word[:-2], -prob,
@@ -1187,7 +1187,7 @@ class NLM(object):
             for i in range(beam_size):
               id, prob = sorted[i]
               new_prob = candidate.get_parent_prob() * prob
-              if cache_ids:
+              if cache_ids and is_id:
                 if not test_dataset.rev_vocab[id].endswith('@@'):
                   if id_cache.has_key(candidate.get_text() + test_dataset.rev_vocab[id]) or new_prob >= SKIP_CACHE_PROB_THRESHOLD:
                     full_tokens_scored += 1
