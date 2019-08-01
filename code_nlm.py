@@ -1216,7 +1216,9 @@ class NLM(object):
 
         # Get top and count rank of correct answer
         if verbose: print('Correct_token:', correct_token)
-        if cache_ids: id_cache[correct_token] = True
+        if cache_ids: 
+          if is_id: id_cache[correct_token] = True
+        
         full_tokens.sort(reverse=True)
         for i, answer in enumerate(full_tokens):
           prob, prediction = answer
