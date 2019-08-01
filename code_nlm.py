@@ -1119,7 +1119,7 @@ class NLM(object):
                   id_acc5 += 1.0
                 if rank <= 10:
                   id_acc10 += 1.0
-          if correct_token != '-UNK-': 
+          if cache_ids and is_id and correct_token != '-UNK-': 
             id_cache[correct_token] = True
           continue
         if FLAGS.token_model: print('???')
@@ -1239,7 +1239,8 @@ class NLM(object):
               if (i + 1) <= 10:
                 id_acc10 += 1.0
       files_done += 1
-      print(id_cache)
+      if cache_ids:
+        print(id_cache)
 
       # Train on remainder
       if dynamic and len(file_data) - train_start > 1:
