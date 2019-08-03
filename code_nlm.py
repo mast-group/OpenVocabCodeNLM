@@ -26,6 +26,12 @@ import numpy as np
 import tensorflow as tf
 import reader
 
+# BPE imports
+import codecs
+from subword_nmt.apply_bpe import BPE, read_vocabulary
+
+
+
 flags = tf.flags
 flags.DEFINE_string("data_path", None, "Path to folder containing training/test data.")
 flags.DEFINE_string("train_dir", None, "Output directory for saving the model.")
@@ -43,6 +49,7 @@ flags.DEFINE_string("test_filename", None, "The test file on which to compute pe
 flags.DEFINE_string("test_proj_filename", None, "The file that contains the test project name for each test instance.")
 flags.DEFINE_string("identifier_map", None, "The file that contains information about which tokens are identifiers.")
 flags.DEFINE_boolean("cache_ids", False, "Set to True to cache project identifiers during completion.")
+flags.DEFINE_string("BPE", None, "The file containing the BPE encoding.")
 flags.DEFINE_string("output_probs_file", "predictionProbabilities.txt", "The file to store output probabilities.")
 
 flags.DEFINE_integer("num_layers", 1, "Number of Layers. Using a single layer is advised.")
@@ -938,6 +945,12 @@ class NLM(object):
     
     id_cache = trie.CharTrie()
     SKIP_CACHE_PROB_THRESHOLD = 0.2
+    # if cache_ids and FLAGS.BPE is not None:
+    #   bpe_codes_fin = FLAGS.BPE
+    #   bpe = BPE(bpe_codes_fin, merges=-1, separator='@@')
+    # else:
+    #   bpe = None
+    # assert(FLAGS.token_model or bpe is not None)
 
     raw_data = test_dataset.data  # is just one long array
     data_len = len(raw_data)
@@ -1038,9 +1051,11 @@ class NLM(object):
             correct_subtokens = []
             remember_state = state
             logits = norm_logits[0]
-            correct_token = correct_word[:-2]
+            # correct_token = correct_word[:-2]
+            correct_token = correct_word
           else:
-            correct_token += correct_word[:-2]
+            # correct_token += correct_word[:-2]
+            correct_token += correct_word
           correct_subtokens.append(correct_word)
           in_token = True
           continue
@@ -1094,7 +1109,8 @@ class NLM(object):
         if prob_mass > satisfaction_prob or counted == top_needed:
           rank = 0
           correct_found = False
-          if verbose: print('correct_token:', correct_token)
+          # if verbose: print('correct_token:', correct_token)
+          if verbose: print('correct_token:', correct_token.replace('@@', ''))
           for prob, prediction in full_tokens:
             if FLAGS.token_model and correct_token == '-UNK-':
               break
@@ -1103,7 +1119,8 @@ class NLM(object):
             if verbose: print(prob, prediction)
             if not correct_found:
               rank += 1
-            if prediction == correct_token:
+            # if prediction == correct_token:
+            if prediction == correct_token.replace('@@', ''):
               mrr += 1.0 / rank
               correct_found = True
               if verbose: print('MRR:', mrr / tokens_done)
@@ -1135,13 +1152,18 @@ class NLM(object):
           word = test_dataset.rev_vocab[id]
           if word.endswith('@@'):
             if cache_ids and is_id:
-              if id_cache.has_subtrie(word[-2]) or prob >= SKIP_CACHE_PROB_THRESHOLD:
+              # if id_cache.has_subtrie(word[-2]) or prob >= SKIP_CACHE_PROB_THRESHOLD:
+              if id_cache.has_subtrie(word) or prob >= SKIP_CACHE_PROB_THRESHOLD:
                 # All the initial state vectors are the same so the first is used
-                candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word[:-2], -prob,
+                # candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word[:-2], -prob,
+                #                                       tuple(tokens_before) + (word,))))
+                candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word, -prob,
                                                       tuple(tokens_before) + (word,))))
             else:
               # All the initial state vectors are the same so the first is used
-              candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word[:-2], -prob,
+              # candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word[:-2], -prob,
+              #                                       tuple(tokens_before) + (word,))))
+              candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word, -prob,
                                                     tuple(tokens_before) + (word,))))
           if len(candidates_pq) >= beam_size:
             break
@@ -1196,7 +1218,8 @@ class NLM(object):
                     worst = heapq.nsmallest(1, full_tokens)
                     worst_full_score = worst[0][0]
                   else:
-                    word = test_dataset.rev_vocab[id][:-2]
+                    # word = test_dataset.rev_vocab[id][:-2]
+                    word = test_dataset.rev_vocab[id]
                     if id_cache.has_subtrie(candidate.get_text() + word) or new_prob >= SKIP_CACHE_PROB_THRESHOLD:
                       heapq.heappush(candidates_pq, (new_prob, Candidate(new_state[0][c_id], id, candidate.get_text() + word,
                                                                         new_prob, tuple(candidate.get_subtoken_history()) +
@@ -1209,13 +1232,15 @@ class NLM(object):
                   worst = heapq.nsmallest(1, full_tokens)
                   worst_full_score = worst[0][0]
                 else:
-                  word = test_dataset.rev_vocab[id][:-2]
+                  # word = test_dataset.rev_vocab[id][:-2]
+                  word = test_dataset.rev_vocab[id]
                   heapq.heappush(candidates_pq, (new_prob, Candidate(new_state[0][c_id], id, candidate.get_text() + word,
                                                                     new_prob, tuple(candidate.get_subtoken_history()) +
                                                                     (test_dataset.rev_vocab[id],))))
 
         # Get top and count rank of correct answer
-        if verbose: print('Correct_token:', correct_token)
+        # if verbose: print('Correct_token:', correct_token)
+        if verbose: print('Correct_token:', correct_token.replace('@@', ''), correct_token)
         if cache_ids: 
           if is_id: id_cache[correct_token] = True
         
