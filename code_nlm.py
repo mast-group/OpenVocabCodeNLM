@@ -944,7 +944,7 @@ class NLM(object):
     state = session.run(self.reset_state)
     
     id_cache = trie.CharTrie()
-    SKIP_CACHE_PROB_THRESHOLD = 0.2
+    SKIP_CACHE_PROB_THRESHOLD = 0.0
     # if cache_ids and FLAGS.BPE is not None:
     #   bpe_codes_fin = FLAGS.BPE
     #   bpe = BPE(bpe_codes_fin, merges=-1, separator='@@')
