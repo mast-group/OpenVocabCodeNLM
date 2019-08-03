@@ -75,6 +75,8 @@ flags.DEFINE_boolean("cross_entropy", False, "Print cross-entropy for validation
 flags.DEFINE_boolean("token_model", False, "Whether it is a token level model.")
 flags.DEFINE_boolean("completion_unk_wrong", False, "Whether completing -UNK- should contribute in MRR. Set to "
                                                     "True for Allamanis et al. heuristic subtoken model.")
+flags.DEFINE_boolean("verbose", False, "Verbose for completion.")
+
 
 FLAGS = flags.FLAGS
 
@@ -935,7 +937,7 @@ class NLM(object):
 
     satisfaction_prob = 0.8
     top_needed = 10
-    verbose = False
+    verbose = FLAGS.verbose
     last_test_project = None
     train_every = config.num_steps
     tokens_done = 0
