@@ -1149,8 +1149,8 @@ class NLM(object):
         # Now find beam_size best candidates to initialize the search
         candidates_pq = []
         for id, prob in sorted:
-          print(prob)
           word = test_dataset.rev_vocab[id]
+          print(word, prob)
           if word.endswith('@@'):
             if cache_ids and is_id:
               # if id_cache.has_subtrie(word[-2]) or prob >= SKIP_CACHE_PROB_THRESHOLD:
