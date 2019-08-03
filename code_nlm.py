@@ -1150,7 +1150,7 @@ class NLM(object):
         candidates_pq = []
         for id, prob in sorted:
           word = test_dataset.rev_vocab[id]
-          print(word, prob)
+          if verbose: print(word, prob)
           if word.endswith('@@'):
             if cache_ids and is_id:
               # if id_cache.has_subtrie(word[-2]) or prob >= SKIP_CACHE_PROB_THRESHOLD:
