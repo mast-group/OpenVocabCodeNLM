@@ -1313,8 +1313,8 @@ class NLM(object):
         index = test_dataset.vocab[identifier]
         prob = logits[index]
         print(prob)
-        if len(ranked_pred) < 10: heapq.heappush(ranked_pred, (-prob, identifier))
-        else: heapq.heappushpop(ranked_pred, (-prob, identifier))
+        if len(ranked_pred) < 10: heapq.heappush(ranked_pred, (prob, identifier))
+        else: heapq.heappushpop(ranked_pred, (prob, identifier))
       else:
         identifier_parts = identifier.split('@@')
         index = test_dataset.vocab[identifier_parts[0] + '@@']
