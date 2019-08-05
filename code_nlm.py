@@ -1410,7 +1410,7 @@ class NLM(object):
           prob = logits[index]
           new_prob = candidate.get_parent_prob() * prob
           heapq.heappush(candidates_pq, (new_prob, Candidate(new_state[0][c_id], index, candidate.get_text(),
-                                                                new_prob, candidate.get_subtoken_history())))
+                                                                new_prob, candidate.get_subtoken_history() + [next_part_index])))
     
     ranked_pred.sort(reverse=True)
     scores = np.asarray([prob for prob, token in ranked_pred])
