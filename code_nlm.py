@@ -1374,7 +1374,10 @@ class NLM(object):
                                                                 new_prob, candidate.get_subtoken_history())))
     
     ranked_pred.sort(reverse=True)
+    scores = np.asarray([prob for prob, token in ranked_pred])
     print(ranked_pred)
+    for i in range(ranked_pred):
+      ranked_pred[i][0] = scores[i]
     print(candidates_pq)
     sys.exit(0)
     return ranked_pred
@@ -1393,6 +1396,11 @@ class NLM(object):
         feed_dict[h] = state[i].h
     norm_logits, loss, cost, state = session.run([self.norm_logits, self.loss, self.cost, self.next_state], feed_dict)
     pass
+  
+  def softmax(x):
+    """Compute softmax values for each sets of scores in x."""
+    e_x = np.exp(x - np.max(x))
+    return e_x / e_x.sum()
 
 
   def maintenance_completion(self, session, config, test_lines, test_projects, train_vocab, train_vocab_rev, beam_size):
