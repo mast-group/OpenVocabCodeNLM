@@ -1134,7 +1134,7 @@ class NLM(object):
             f_tokens = []
             for pred in pred_scores:
               f_tokens.append((pred_scores[pred], pred))
-            heapq.heapify(f_tokens)
+            f_tokens.sort(reverse=True)
             full_tokens = f_tokens[: 10]
           
           for prob, prediction in full_tokens:
@@ -1291,7 +1291,7 @@ class NLM(object):
           f_tokens = []
           for pred in pred_scores:
             f_tokens.append((pred_scores[pred], pred))
-          heapq.heapify(f_tokens)
+          f_tokens.sort(reverse=True)
           full_tokens = f_tokens[: 10]
           print('new full tokens:', full_tokens)
           print(correct_token)
