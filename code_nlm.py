@@ -1422,7 +1422,7 @@ class NLM(object):
       # print(scores[i])
       norm_pred.append( (scores[i], ranked_pred[i][1]) )
     # print(candidates_pq)
-    # print(norm_pred)
+    print(norm_pred)
     # sys.exit(0)
     return norm_pred
 
