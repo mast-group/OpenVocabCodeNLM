@@ -1362,7 +1362,10 @@ class NLM(object):
           index = test_dataset.vocab[identifier_parts[next_part_index]]
           prob = logits[index]
           new_prob = candidate.get_parent_prob() * prob
-          heapq.heappushpop(ranked_pred, (-new_prob, candidate.get_text()))
+          if len(ranked_pred) < 10: 
+            heapq.heappush(ranked_pred, (-new_prob, candidate.get_text()))
+          else:
+            heapq.heappushpop(ranked_pred, (-new_prob, candidate.get_text()))
         else:
           index = test_dataset.vocab[identifier_parts[next_part_index] + '@@']
           prob = logits[index]
