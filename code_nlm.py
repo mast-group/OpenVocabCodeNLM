@@ -1280,6 +1280,7 @@ class NLM(object):
           for prob, pred in cache_predictions:
             pred_scores[pred] = CACHE_WEIGHT * prob
           for prob, prediction in full_tokens:
+            prediction = prediction.replace('@@', '')
             if prediction in pred_scores:
               pred_scores[prediction] = pred_scores[prediction] + (1.0 - CACHE_WEIGHT) * prob
             else:
@@ -1297,7 +1298,7 @@ class NLM(object):
         for i, answer in enumerate(full_tokens):
           prob, prediction = answer
           if verbose: print(-prob, prediction)
-          if prediction == correct_token.replace('@@', ''):
+          if prediction.replace('@@', '') == correct_token.replace('@@', ''):
             mrr += 1.0 / (i + 1)
             if verbose: print('MRR:', mrr / tokens_done)
             if verbose: print()
