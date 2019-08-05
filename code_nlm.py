@@ -1303,15 +1303,18 @@ class NLM(object):
   
 
   def _score_cache_contents(self, session, config, beam_size, test_dataset, logits, id_cache, context, state):
-    
+    ranked_pred = []
+    heapq.heapify(ranked_pred)
     for identifier in id_cache.iterkeys():
       print(identifier)
       if not '@@' in identifier:
         index = test_dataset.vocab[identifier]
         prob = logits[index]
         print(prob)
+        if len(ranked_pred) < 10: heapq.heappush(ranked_pred, (-prob, identifier))
+        else: heapq.heappushpop(ranked_pred, (-prob, identifier))
       pass
-
+    print(ranked_pred)
     sys.exit(0)
 
     feed_dict = {self.inputd: np.array([[context]] * self.batch_size),
