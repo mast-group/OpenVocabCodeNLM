@@ -1120,7 +1120,7 @@ class NLM(object):
           
           if cache_ids and is_id:
             cache_predictions = self._score_cache_contents(session, config, beam_size, test_dataset, \
-              list(norm_logits[0]), id_cache, context, state)
+              list(norm_logits[0]), id_cache, context, remember_state)
             pred_scores = dict()
             for prob, pred in cache_predictions:
               pred_scores[pred] = CACHE_WEIGHT * prob
@@ -1275,7 +1275,7 @@ class NLM(object):
         if cache_ids and is_id:
           print('full_tokens:', full_tokens)
           cache_predictions = self._score_cache_contents(session, config, beam_size, test_dataset, \
-            list(norm_logits[0]), id_cache, context, state)
+            list(norm_logits[0]), id_cache, context, remember_state)
           pred_scores = dict()
           for prob, pred in cache_predictions:
             pred_scores[pred] = CACHE_WEIGHT * prob
