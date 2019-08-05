@@ -1375,35 +1375,17 @@ class NLM(object):
     
     ranked_pred.sort(reverse=True)
     scores = np.asarray([prob for prob, token in ranked_pred])
-    scores = self.softmax(scores)
+    scores_sum = sum(scores)
+    scores = [score / scores_sum for score in scores]
     print(ranked_pred)
-    softmax_pred = []
+    norm_pred = []
     for i in range(len(ranked_pred)):
       print(scores[i])
-      softmax_pred.append( (scores[i], ranked_pred[i][1]) )
+      norm_pred.append( (scores[i], ranked_pred[i][1]) )
     print(candidates_pq)
-    print(softmax_pred)
+    print(norm_pred)
     sys.exit(0)
-    return ranked_pred
-
-    feed_dict = {self.inputd: np.array([[context]] * self.batch_size),
-                     self.targets: np.array([[target]] * self.batch_size),
-                     self.target_weights: np.array([[1.0]] * self.batch_size),
-                     self.keep_probability: 1.0
-                    }
-    if FLAGS.gru:
-      for i, h in enumerate(self.reset_state):
-        feed_dict[h] = state[i]
-    else: # LSTM
-      for i, (c, h) in enumerate(self.reset_state):
-        feed_dict[c] = state[i].c
-        feed_dict[h] = state[i].h
-    norm_logits, loss, cost, state = session.run([self.norm_logits, self.loss, self.cost, self.next_state], feed_dict)
-    pass
-  
-  def softmax(self, x):
-    """Compute softmax values for each sets of scores in x."""
-    return np.exp(x) / np.sum(np.exp(x), axis=0)
+    return norm_pred
 
 
   def maintenance_completion(self, session, config, test_lines, test_projects, train_vocab, train_vocab_rev, beam_size):
