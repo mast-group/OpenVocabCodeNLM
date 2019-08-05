@@ -1004,6 +1004,7 @@ class NLM(object):
       # to_add = []
       for subtoken_id, context_target_is_id in enumerate(zip(file_data[:-1], file_data[1:], file_ids)):
         context, target, is_id = context_target_is_id
+        print(context_target_is_id)
         train_end += 1
 
         # to_add.append(test_dataset.rev_vocab[context])
