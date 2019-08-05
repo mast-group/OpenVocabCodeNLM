@@ -1375,6 +1375,7 @@ class NLM(object):
     
     ranked_pred.sort(reverse=True)
     scores = np.asarray([prob for prob, token in ranked_pred])
+    scores = softmax(scores)
     print(ranked_pred)
     softmax_pred = []
     for i in range(len(ranked_pred)):
