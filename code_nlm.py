@@ -1319,7 +1319,7 @@ class NLM(object):
         identifier_parts = identifier.split('@@')
         index = test_dataset.vocab[identifier_parts[0] + '@@']
         prob = logits[index]
-        candidates_pq.append(-prob, Candidate(state[0][0], index, identifier_parts[0], -prob, [0]))
+        candidates_pq.append((-prob, Candidate(state[0][0], index, identifier_parts[0], -prob, [0])))
         # unscored.append((identifier_parts, logits[index]))
     print(ranked_pred)
     print(candidates_pq)
