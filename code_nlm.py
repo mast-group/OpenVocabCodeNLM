@@ -1316,7 +1316,7 @@ class NLM(object):
         else: heapq.heappushpop(ranked_pred, (-prob, identifier))
       else:
         identifier_parts = identifier.split('@@')
-        index = test_dataset.vocab[identifier_parts[0]]
+        index = test_dataset.vocab[identifier_parts[0]+ '@@']
         unscored.append((identifier_parts, logits[index]))
     print(ranked_pred)
     print(unscored)
