@@ -1403,8 +1403,7 @@ class NLM(object):
   
   def softmax(self, x):
     """Compute softmax values for each sets of scores in x."""
-    e_x = np.exp(x - np.max(x))
-    return e_x / e_x.sum()
+    return np.exp(x) / np.sum(np.exp(x), axis=0)
 
 
   def maintenance_completion(self, session, config, test_lines, test_projects, train_vocab, train_vocab_rev, beam_size):
