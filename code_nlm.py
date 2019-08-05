@@ -1375,7 +1375,7 @@ class NLM(object):
     
     ranked_pred.sort(reverse=True)
     scores = np.asarray([prob for prob, token in ranked_pred])
-    scores = softmax(scores)
+    scores = self.softmax(scores)
     print(ranked_pred)
     softmax_pred = []
     for i in range(len(ranked_pred)):
@@ -1401,7 +1401,7 @@ class NLM(object):
     norm_logits, loss, cost, state = session.run([self.norm_logits, self.loss, self.cost, self.next_state], feed_dict)
     pass
   
-  def softmax(x):
+  def softmax(self, x):
     """Compute softmax values for each sets of scores in x."""
     e_x = np.exp(x - np.max(x))
     return e_x / e_x.sum()
