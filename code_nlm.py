@@ -1162,6 +1162,7 @@ class NLM(object):
                   id_acc5 += 1.0
                 if rank <= 10:
                   id_acc10 += 1.0
+          print(rank)
           if cache_ids and is_id and correct_token != '-UNK-': 
             id_cache[correct_token] = True
           continue
@@ -1314,6 +1315,7 @@ class NLM(object):
                 id_acc5 += 1.0
               if (i + 1) <= 10:
                 id_acc10 += 1.0
+        print(i)
       files_done += 1
       if cache_ids:
         print(id_cache)
