@@ -1335,7 +1335,7 @@ class NLM(object):
 
       missing = beam_size - len(to_expand)
       for m in range(missing):
-        to_expand.append(0.0, Candidate(state[0][0], 0, [], 0.0, [0]))
+        to_expand.append((0.0, Candidate(state[0][0], 0, [], 0.0, [0])))
 
       # if len(to_expand) < beam_size: break
 
