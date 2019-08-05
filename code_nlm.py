@@ -1048,7 +1048,7 @@ class NLM(object):
 
         correct_word = test_dataset.rev_vocab[target]
         if verbose: print('Correct:', correct_word)
-        if train_start > 0:
+        if train_start > 0 and is_id:
           self._score_cache_contents(session, config, beam_size, test_dataset, list(norm_logits[0]), id_cache, context, state)
         
         if correct_word.endswith('@@'):
