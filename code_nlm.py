@@ -1047,6 +1047,7 @@ class NLM(object):
 
         correct_word = test_dataset.rev_vocab[target]
         if verbose: print('Correct:', correct_word)
+        self._score_cache_contents(session, config, beam_size, test_dataset, id_cache, context, state)
 
         if correct_word.endswith('@@'):
           if not in_token:
@@ -1085,7 +1086,7 @@ class NLM(object):
         prob_mass = 0.0
         counted = 0
         for id, prob in sorted:
-          if cache_ids and is_id:
+          if cache_ids and is_id and False:
             word = test_dataset.rev_vocab[id]
             counted += 1
             if not word.endswith('@@'):
@@ -1154,7 +1155,7 @@ class NLM(object):
           word = test_dataset.rev_vocab[id]
           if verbose: print(word, prob)
           if word.endswith('@@'):
-            if cache_ids and is_id:
+            if cache_ids and is_id and False:
               # if id_cache.has_subtrie(word[-2]) or prob >= SKIP_CACHE_PROB_THRESHOLD:
               if id_cache.has_subtrie(word) or prob >= SKIP_CACHE_PROB_THRESHOLD:
                 # All the initial state vectors are the same so the first is used
@@ -1212,7 +1213,7 @@ class NLM(object):
             for i in range(beam_size):
               id, prob = sorted[i]
               new_prob = candidate.get_parent_prob() * prob
-              if cache_ids and is_id:
+              if cache_ids and is_id and False:
                 if not test_dataset.rev_vocab[id].endswith('@@'):
                   if id_cache.has_key(candidate.get_text() + test_dataset.rev_vocab[id]) or new_prob >= SKIP_CACHE_PROB_THRESHOLD:
                     full_tokens_scored += 1
@@ -1297,6 +1298,31 @@ class NLM(object):
 
     print('Tokens scored:', tokens_done)
     return mrr / tokens_done
+  
+
+  def _score_cache_contents(self, session, config, beam_size, test_dataset, id_cache, context, state):
+    
+    for identifier in id_cache.iterkeys():
+      print(identifier)
+      pass
+
+    sys.exit(0)
+
+    feed_dict = {self.inputd: np.array([[context]] * self.batch_size),
+                     self.targets: np.array([[target]] * self.batch_size),
+                     self.target_weights: np.array([[1.0]] * self.batch_size),
+                     self.keep_probability: 1.0
+                    }
+    if FLAGS.gru:
+      for i, h in enumerate(self.reset_state):
+        feed_dict[h] = state[i]
+    else: # LSTM
+      for i, (c, h) in enumerate(self.reset_state):
+        feed_dict[c] = state[i].c
+        feed_dict[h] = state[i].h
+    norm_logits, loss, cost, state = session.run([self.norm_logits, self.loss, self.cost, self.next_state], feed_dict)
+    pass
+
 
   def maintenance_completion(self, session, config, test_lines, test_projects, train_vocab, train_vocab_rev, beam_size):
     """
