@@ -1010,6 +1010,7 @@ class NLM(object):
         if (subtoken_id - 1) - train_start > train_every and not test_dataset.rev_vocab[context].endswith('@@'):
           # train
           if dynamic:
+            self._score_cache_contents(session, config, beam_size, test_dataset, id_cache, context, state)
             tr_context, tr_target, tr_target_weights = file_data[train_start : subtoken_id - 1], \
                                                        file_data[train_start + 1 : subtoken_id], \
                                                        [1.0] * ((subtoken_id - 1) - train_start)
@@ -1047,8 +1048,7 @@ class NLM(object):
 
         correct_word = test_dataset.rev_vocab[target]
         if verbose: print('Correct:', correct_word)
-        self._score_cache_contents(session, config, beam_size, test_dataset, id_cache, context, state)
-
+        
         if correct_word.endswith('@@'):
           if not in_token:
             correct_subtokens = []
