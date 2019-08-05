@@ -1308,11 +1308,11 @@ class NLM(object):
     candidates_pq = []
     heapq.heapify(candidates_pq)
     for identifier in id_cache.iterkeys():
-      print(identifier)
+      # print(identifier)
       if not '@@' in identifier:
         index = test_dataset.vocab[identifier]
         prob = logits[index]
-        print(prob)
+        # print(prob)
         if len(ranked_pred) < 10: heapq.heappush(ranked_pred, (prob, identifier))
         else: heapq.heappushpop(ranked_pred, (prob, identifier))
       else:
@@ -1321,8 +1321,8 @@ class NLM(object):
         prob = logits[index]
         candidates_pq.append((-prob, Candidate(state[0][0], index, identifier_parts[0], -prob, [0])))
         # unscored.append((identifier_parts, logits[index]))
-    print(ranked_pred)
-    print(candidates_pq)
+    # print(ranked_pred)
+    # print(candidates_pq)
     
     while len(candidates_pq) > 0:
       to_expand = []
@@ -1377,13 +1377,13 @@ class NLM(object):
     scores = np.asarray([prob for prob, token in ranked_pred])
     scores_sum = sum(scores)
     scores = [score / scores_sum for score in scores]
-    print(ranked_pred)
+    # print(ranked_pred)
     norm_pred = []
     for i in range(len(ranked_pred)):
-      print(scores[i])
+      # print(scores[i])
       norm_pred.append( (scores[i], ranked_pred[i][1]) )
-    print(candidates_pq)
-    print(norm_pred)
+    # print(candidates_pq)
+    # print(norm_pred)
     # sys.exit(0)
     return norm_pred
 
