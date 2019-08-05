@@ -1305,7 +1305,8 @@ class NLM(object):
   def _score_cache_contents(self, session, config, beam_size, test_dataset, logits, id_cache, context, state):
     ranked_pred = []
     heapq.heapify(ranked_pred)
-    unscored = []
+    candidates_pq = []
+    heapq.heapify(candidates_pq)
     for identifier in id_cache.iterkeys():
       print(identifier)
       if not '@@' in identifier:
@@ -1316,10 +1317,61 @@ class NLM(object):
         else: heapq.heappushpop(ranked_pred, (-prob, identifier))
       else:
         identifier_parts = identifier.split('@@')
-        index = test_dataset.vocab[identifier_parts[0]+ '@@']
-        unscored.append((identifier_parts, logits[index]))
+        index = test_dataset.vocab[identifier_parts[0] + '@@']
+        prob = logits[index]
+        candidates_pq.append(-prob, Candidate(state[0][0], index, identifier_parts[0], -prob, [0]))
+        # unscored.append((identifier_parts, logits[index]))
     print(ranked_pred)
-    print(unscored)
+    print(candidates_pq)
+    
+    while len(candidates_pq) > 0:
+      to_expand = []
+      new_state = (np.empty([beam_size, config.hidden_size]), )
+      for c_id in range(beam_size):
+        if len(candidates_pq) == 0:
+          break
+        to_expand.append(heapq.heappop(candidates_pq))
+        new_state[0][c_id] = to_expand[-1][1].get_state_vec()
+
+      missing = beam_size - len(to_expand)
+      for m in range(missing):
+        to_expand.append(0.0, Candidate(state[0][0], 0, [], 0.0, [0]))
+
+      # if len(to_expand) < beam_size: break
+
+      feed_dict = {self.inputd: np.array([[candidate.get_id()] for (score, candidate) in to_expand]),
+                    self.keep_probability: 1.0
+                  }
+      if FLAGS.gru:
+        for i, h in enumerate(self.reset_state):
+          feed_dict[h] = new_state[i]
+      else:
+        for i, (c, h) in enumerate(self.reset_state):
+          feed_dict[c] = new_state[i].c
+          feed_dict[h] = new_state[i].h
+      norm_logits, new_state = session.run([self.norm_logits, self.next_state], feed_dict)
+      for c_id in range(beam_size):
+        _, candidate = to_expand[c_id]
+        if candidate.get_parent_prob() == 0.0:
+          continue
+        
+        logits = list(norm_logits[c_id])
+        identifier_parts = candidate.get_text()
+        next_part_index = candidate.get_subtoken_history()[-1] + 1
+        if next_part_index == len(identifier_parts) - 1:
+          index = test_dataset.vocab[identifier_parts[next_part_index]]
+          prob = logits[index]
+          new_prob = candidate.get_parent_prob() * prob
+          heapq.heappushpop(ranked_pred, (-new_prob, candidate.get_text()))
+        else:
+          index = test_dataset.vocab[identifier_parts[next_part_index] + '@@']
+          prob = logits[index]
+          new_prob = candidate.get_parent_prob() * prob
+          heapq.heappush(candidates_pq, (new_prob, Candidate(new_state[0][c_id], index, candidate.get_text(),
+                                                                new_prob, candidate.get_subtoken_history())))
+    
+    print(ranked_pred)
+    print(candidates_pq)
     sys.exit(0)
 
     feed_dict = {self.inputd: np.array([[context]] * self.batch_size),
