@@ -1376,7 +1376,7 @@ class NLM(object):
     ranked_pred.sort(reverse=True)
     scores = np.asarray([prob for prob, token in ranked_pred])
     print(ranked_pred)
-    for i in range(ranked_pred):
+    for i in range(len(ranked_pred)):
       ranked_pred[i][0] = scores[i]
     print(candidates_pq)
     sys.exit(0)
