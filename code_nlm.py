@@ -1396,19 +1396,24 @@ class NLM(object):
         
         logits = list(norm_logits[c_id])
         identifier_parts = candidate.get_text()
+        print(identifier_parts)
         next_part_index = candidate.get_subtoken_history()[-1] + 1
         if next_part_index == len(identifier_parts) - 1:
           index = test_dataset.vocab[identifier_parts[next_part_index]]
           prob = logits[index]
           new_prob = candidate.get_parent_prob() * prob
           if len(ranked_pred) < 10: 
+            print('pushing full token:', ranked_pred, (-new_prob, candidate.get_text()))
             heapq.heappush(ranked_pred, (-new_prob, candidate.get_text()))
           else:
+            print('pushing full token:', ranked_pred, (-new_prob, candidate.get_text()))
             heapq.heappushpop(ranked_pred, (-new_prob, candidate.get_text()))
         else:
           index = test_dataset.vocab[identifier_parts[next_part_index] + '@@']
           prob = logits[index]
           new_prob = candidate.get_parent_prob() * prob
+          print('Pushing new candidate:', (new_prob, Candidate(new_state[0][c_id], index, candidate.get_text(),
+                                                                new_prob, list(candidate.get_subtoken_history()) + [next_part_index])))
           heapq.heappush(candidates_pq, (new_prob, Candidate(new_state[0][c_id], index, candidate.get_text(),
                                                                 new_prob, list(candidate.get_subtoken_history()) + [next_part_index])))
     
