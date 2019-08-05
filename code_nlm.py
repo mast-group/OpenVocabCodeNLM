@@ -1273,7 +1273,7 @@ class NLM(object):
         full_tokens.sort(reverse=True)
         
         if cache_ids and is_id:
-          print(full_tokens)
+          print('full_tokens:', full_tokens)
           cache_predictions = self._score_cache_contents(session, config, beam_size, test_dataset, \
             list(norm_logits[0]), id_cache, context, state)
           pred_scores = dict()
@@ -1290,14 +1290,14 @@ class NLM(object):
             f_tokens.append((pred_scores[pred], pred))
           heapq.heapify(f_tokens)
           full_tokens = f_tokens[: 10]
-          print(full_tokens)
+          print('new full tokens:', full_tokens)
           print(correct_token)
           print()
         
         for i, answer in enumerate(full_tokens):
           prob, prediction = answer
           if verbose: print(-prob, prediction)
-          if prediction == correct_token:
+          if prediction == correct_token.replace('@@', ''):
             mrr += 1.0 / (i + 1)
             if verbose: print('MRR:', mrr / tokens_done)
             if verbose: print()
@@ -1432,7 +1432,7 @@ class NLM(object):
       # print(scores[i])
       norm_pred.append( (scores[i], ranked_pred[i][1]) )
     # print(candidates_pq)
-    print(norm_pred)
+    print('cache norm pred:', norm_pred)
     # sys.exit(0)
     return norm_pred
 
