@@ -946,6 +946,7 @@ class NLM(object):
     state = session.run(self.reset_state)
     
     id_cache = trie.CharTrie()
+    CACHE_WEIGHT = 0.5
     SKIP_CACHE_PROB_THRESHOLD = 0.0
     # if cache_ids and FLAGS.BPE is not None:
     #   bpe_codes_fin = FLAGS.BPE
@@ -1048,8 +1049,8 @@ class NLM(object):
 
         correct_word = test_dataset.rev_vocab[target]
         if verbose: print('Correct:', correct_word)
-        if train_start > 0 and is_id:
-          self._score_cache_contents(session, config, beam_size, test_dataset, list(norm_logits[0]), id_cache, context, state)
+        # if train_start > 0 and is_id:
+        #   self._score_cache_contents(session, config, beam_size, test_dataset, list(norm_logits[0]), id_cache, context, state)
         
         if correct_word.endswith('@@'):
           if not in_token:
@@ -1116,6 +1117,25 @@ class NLM(object):
           correct_found = False
           # if verbose: print('correct_token:', correct_token)
           if verbose: print('correct_token:', correct_token.replace('@@', ''))
+          
+          if cache_ids and is_id:
+            cache_predictions = self._score_cache_contents(session, config, beam_size, test_dataset, \
+              list(norm_logits[0]), id_cache, context, state)
+            pred_scores = dict()
+            for prob, pred in cache_predictions:
+              pred_scores[pred] = CACHE_WEIGHT * prob
+            for prob, prediction in full_tokens:
+              if prediction in pred_scores:
+                pred_scores[prediction] = pred_scores[prediction] + (1.0 - CACHE_WEIGHT) * prob
+              else:
+                prediction = (1.0 - CACHE_WEIGHT) * prob
+            # sort
+            f_tokens = []
+            for pred in pred_scores:
+              f_tokens.append((pred_scores[pred], pred))
+            heapq.heapify(f_tokens)
+            full_tokens = f_tokens[: 10]
+          
           for prob, prediction in full_tokens:
             if FLAGS.token_model and correct_token == '-UNK-':
               break
@@ -1251,6 +1271,25 @@ class NLM(object):
           if is_id: id_cache[correct_token] = True
         
         full_tokens.sort(reverse=True)
+        
+        if cache_ids and is_id:
+          cache_predictions = self._score_cache_contents(session, config, beam_size, test_dataset, \
+            list(norm_logits[0]), id_cache, context, state)
+          pred_scores = dict()
+          for prob, pred in cache_predictions:
+            pred_scores[pred] = CACHE_WEIGHT * prob
+          for prob, prediction in full_tokens:
+            if prediction in pred_scores:
+              pred_scores[prediction] = pred_scores[prediction] + (1.0 - CACHE_WEIGHT) * prob
+            else:
+              prediction = (1.0 - CACHE_WEIGHT) * prob
+          # sort
+          f_tokens = []
+          for pred in pred_scores:
+            f_tokens.append((pred_scores[pred], pred))
+          heapq.heapify(f_tokens)
+          full_tokens = f_tokens[: 10]
+        
         for i, answer in enumerate(full_tokens):
           prob, prediction = answer
           if verbose: print(-prob, prediction)
