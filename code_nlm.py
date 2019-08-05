@@ -1373,9 +1373,11 @@ class NLM(object):
           heapq.heappush(candidates_pq, (new_prob, Candidate(new_state[0][c_id], index, candidate.get_text(),
                                                                 new_prob, candidate.get_subtoken_history())))
     
+    ranked_pred.sort(reverse=True)
     print(ranked_pred)
     print(candidates_pq)
     sys.exit(0)
+    return ranked_pred
 
     feed_dict = {self.inputd: np.array([[context]] * self.batch_size),
                      self.targets: np.array([[target]] * self.batch_size),
