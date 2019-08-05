@@ -1315,6 +1315,7 @@ class NLM(object):
                 id_acc5 += 1.0
               if (i + 1) <= 10:
                 id_acc10 += 1.0
+            break
         print(i + 1)
       files_done += 1
       if cache_ids:
