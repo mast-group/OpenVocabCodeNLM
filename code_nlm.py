@@ -949,7 +949,6 @@ class NLM(object):
     files_done = 0
     identifiers = 0
     file_identifiers = 0
-    project_identifiers = 0
     state = session.run(self.reset_state)
     
     context_history = deque([None] * 5, 5)
@@ -985,10 +984,12 @@ class NLM(object):
         data_covered += 1
       data_covered += 1 # eod symbol
       file_identifiers = 0
+      
       # Reset identifier cache for each file.
       if cache_ids:
           id_cache.clear()
           ids_in_cache = 0.0
+          ids_in_project_cache = 0.0
 
       if dynamic:
         test_project = test_projects[files_done]
@@ -1003,7 +1004,6 @@ class NLM(object):
             print('clearing project cache')
             ids_in_project_cache = 0.0
             project_id_cache.clear()
-            project_identifiers = 0
         last_test_project = test_project
 
       file_data = raw_data[file_start_index:data_covered]
@@ -1400,7 +1400,7 @@ class NLM(object):
         print(id_mrr / identifiers, id_acc1 / identifiers, id_acc3 / identifiers, \
           id_acc5 / identifiers, id_acc10 / identifiers)
         print(ids_in_cache / file_identifiers)
-        print(ids_in_project_cache / project_identifiers)
+        print(ids_in_project_cache / file_identifiers)
 
     print('Tokens scored:', tokens_done)
     return mrr / tokens_done
