@@ -1322,7 +1322,10 @@ class NLM(object):
                 id_acc10 += 1.0
             break
         if not correct_found: i += 1
-        if cache_ids and is_id: print(i + 1)
+        if cache_ids and is_id: 
+          print(i + 1)
+          if i + 1 > 10:
+            print(correct_token, full_tokens, cache_predictions)
       files_done += 1
       if cache_ids:
         print(id_cache)
