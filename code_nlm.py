@@ -936,7 +936,9 @@ class NLM(object):
     id_acc3 = 0.0
     id_acc5 = 0.0
     id_acc10 = 0.0
+
     ids_in_cache = 0.0
+    ids_in_project_cache = 0.0
 
     satisfaction_prob = 0.8
     top_needed = 10
@@ -1093,6 +1095,8 @@ class NLM(object):
 
         if id_cache.has_key(correct_token):
           ids_in_cache += 1.0
+        if project_id_cache.has_key(correct_token):
+          ids_in_project_cache += 1.0
 
         # Rank single subtoken long predictions and keep top_needed (usually 10) best complete token ones
         sorted = list(enumerate(logits))
@@ -1183,6 +1187,7 @@ class NLM(object):
           
           if cache_ids and is_id and correct_token != '-UNK-': 
             id_cache[correct_token] = True
+            project_id_cache[correct_token] = True
           continue
         if FLAGS.token_model: print('???')
 
@@ -1288,7 +1293,9 @@ class NLM(object):
         # if verbose: print('Correct_token:', correct_token)
         if verbose: print('Correct_token:', correct_token.replace('@@', ''), correct_token)
         if cache_ids: 
-          if is_id: id_cache[correct_token] = True
+          if is_id:
+            id_cache[correct_token] = True
+            project_id_cache[correct_token] = True
         
         full_tokens.sort(reverse=True)
         
@@ -1370,6 +1377,7 @@ class NLM(object):
         print(id_mrr / identifiers, id_acc1 / identifiers, id_acc3 / identifiers, \
           id_acc5 / identifiers, id_acc10 / identifiers)
         print(ids_in_cache / identifiers)
+        print(ids_project_cache / identifiers)
 
     print('Tokens scored:', tokens_done)
     return mrr / tokens_done
