@@ -948,6 +948,8 @@ class NLM(object):
     tokens_done = 0
     files_done = 0
     identifiers = 0
+    file_identifiers = 0
+    project_identifiers = 0
     state = session.run(self.reset_state)
     
     context_history = deque([None] * 5, 5)
@@ -982,6 +984,7 @@ class NLM(object):
       while raw_data[data_covered] != end_file_id:
         data_covered += 1
       data_covered += 1 # eod symbol
+      file_identifiers = 0
       # Reset identifier cache for each file.
       if cache_ids:
           id_cache.clear()
@@ -1000,6 +1003,7 @@ class NLM(object):
             print('clearing project cache')
             ids_in_project_cache = 0.0
             project_id_cache.clear()
+            project_identifiers = 0
         last_test_project = test_project
 
       file_data = raw_data[file_start_index:data_covered]
@@ -1086,6 +1090,8 @@ class NLM(object):
           tokens_done += 1
           if not id_map is None and is_id:
             identifiers += 1
+            file_identifiers += 1
+            project_identifiers += 1
           if not in_token:
             correct_subtokens = []
             remember_state = state
@@ -1099,7 +1105,6 @@ class NLM(object):
         full_tokens_found = 0
         full_tokens = []
 
-        context_history
         if id_cache.has_key(correct_token):
           ids_in_cache += 1.0
         if project_id_cache.has_key(correct_token):
@@ -1192,9 +1197,20 @@ class NLM(object):
           #   if rank > 10:
           #     print(correct_token, full_tokens, cache_predictions)
           
-          if cache_ids and is_id and correct_token != '-UNK-': 
+          if cache_ids and is_id and correct_token != '-UNK-':
             id_cache[correct_token] = True
             project_id_cache[correct_token] = True
+            if context_history in ngram_cache:
+              ngram_cache[context_history].add(correct_token)
+            else:
+              ngram_cache[context_history] = set()
+              ngram_cache[context_history].add(correct_token)
+            if context_history in ngram_project_cache:
+              ngram_project_cache[context_history].add(correct_token)
+            else:
+              ngram_project_cache[context_history] = set()
+              ngram_project_cache[context_history].add(correct_token)
+            context_history.append(correct_token)
           continue
         if FLAGS.token_model: print('???')
 
@@ -1383,8 +1399,8 @@ class NLM(object):
       if not id_map is None :
         print(id_mrr / identifiers, id_acc1 / identifiers, id_acc3 / identifiers, \
           id_acc5 / identifiers, id_acc10 / identifiers)
-        print(ids_in_cache / identifiers)
-        print(ids_in_project_cache / identifiers)
+        print(ids_in_cache / file_identifiers)
+        print(ids_in_project_cache / project_identifiers)
 
     print('Tokens scored:', tokens_done)
     return mrr / tokens_done
