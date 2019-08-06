@@ -956,7 +956,7 @@ class NLM(object):
     context_history = deque([None] * 5, 5)
     ngram_cache = dict()
     ngram_project_cache = dict()
-    project_context_history = []
+    # project_context_history = []
     id_cache = trie.CharTrie()
     project_id_cache = trie.CharTrie()
     CACHE_WEIGHT = FLAGS.file_cache_weight
@@ -992,6 +992,7 @@ class NLM(object):
           id_cache.clear()
           ids_in_cache = 0.0
           ids_in_project_cache = 0.0
+          context_history = deque([None] * 5, 5)
           ngram_cache = dict()
           context_history_in_ngram_cache = 0.0
 
