@@ -1300,10 +1300,12 @@ class NLM(object):
           # print(correct_token)
           # print()
         
+        correct_found = False
         for i, answer in enumerate(full_tokens):
           prob, prediction = answer
           if verbose: print(-prob, prediction)
           if prediction.replace('@@', '') == correct_token.replace('@@', ''):
+            correct_found = True
             mrr += 1.0 / (i + 1)
             if verbose: print('MRR:', mrr / tokens_done)
             if verbose: print()
@@ -1319,6 +1321,7 @@ class NLM(object):
               if (i + 1) <= 10:
                 id_acc10 += 1.0
             break
+        if not correct_found: i += 1
         if cache_ids and is_id: print(i + 1)
       files_done += 1
       if cache_ids:
