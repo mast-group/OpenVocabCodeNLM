@@ -950,6 +950,8 @@ class NLM(object):
     identifiers = 0
     state = session.run(self.reset_state)
     
+    context_history = []
+    project_context_history = []
     id_cache = trie.CharTrie()
     project_id_cache = trie.CharTrie()
     CACHE_WEIGHT = FLAGS.file_cache_weight
@@ -992,6 +994,7 @@ class NLM(object):
           
           # Reset the project's cache of identifiers if one is used.
           if cache_ids:
+            print('clearing project cache')
             project_id_cache.clear()
             id_cache.clear()
         last_test_project = test_project
