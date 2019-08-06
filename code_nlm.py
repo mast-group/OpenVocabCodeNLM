@@ -66,6 +66,8 @@ flags.DEFINE_float("learning_rate", 0.1, "Learning rate")
 flags.DEFINE_float("max_grad_norm", 5.0, "Clip gradients to this norm")
 flags.DEFINE_float("lr_decay", 0.5, "Learning rate decay. Default is 0.5 which halves the learning rate.")
 
+flags.DEFINE_float("file_cache_weight", 0.2, "Weight of the file cache.")
+
 flags.DEFINE_integer("thresh", 0, "Threshold for vocabulary inclusion.")
 flags.DEFINE_boolean("unk", True, "use -UNK- token to model OOV.")
 flags.DEFINE_boolean("gru", False, "Use a GRU cell. Must be set to True to use a GRU, otherwise an LSTM will be used.")
@@ -946,7 +948,7 @@ class NLM(object):
     state = session.run(self.reset_state)
     
     id_cache = trie.CharTrie()
-    CACHE_WEIGHT = 0.5
+    CACHE_WEIGHT = FLAGS.file_cache_weight
     SKIP_CACHE_PROB_THRESHOLD = 0.0
     # if cache_ids and FLAGS.BPE is not None:
     #   bpe_codes_fin = FLAGS.BPE
