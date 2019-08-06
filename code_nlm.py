@@ -971,6 +971,9 @@ class NLM(object):
       while raw_data[data_covered] != end_file_id:
         data_covered += 1
       data_covered += 1 # eod symbol
+      # Reset identifier cache for each file.
+      if cache_ids:
+          id_cache.clear()
 
       if dynamic:
         test_project = test_projects[files_done]
