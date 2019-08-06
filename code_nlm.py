@@ -948,8 +948,10 @@ class NLM(object):
     state = session.run(self.reset_state)
     
     id_cache = trie.CharTrie()
+    project_id_cache = trie.CharTrie()
     CACHE_WEIGHT = FLAGS.file_cache_weight
-    SKIP_CACHE_PROB_THRESHOLD = 0.0
+    PROJECT_CACHE_WEIGHT = FLAGS.file_cache_weight * 0.5
+    SKIP_CACHE_PROB_THRESHOLD = 0.1
     # if cache_ids and FLAGS.BPE is not None:
     #   bpe_codes_fin = FLAGS.BPE
     #   bpe = BPE(bpe_codes_fin, merges=-1, separator='@@')
@@ -974,8 +976,8 @@ class NLM(object):
         data_covered += 1
       data_covered += 1 # eod symbol
       # Reset identifier cache for each file.
-      # if cache_ids:
-      #     id_cache.clear()
+      if cache_ids:
+          id_cache.clear()
 
       if dynamic:
         test_project = test_projects[files_done]
@@ -987,6 +989,7 @@ class NLM(object):
           
           # Reset the project's cache of identifiers if one is used.
           if cache_ids:
+            project_id_cache.clear()
             id_cache.clear()
         last_test_project = test_project
 
@@ -1094,7 +1097,7 @@ class NLM(object):
         prob_mass = 0.0
         counted = 0
         for id, prob in sorted:
-          if cache_ids and is_id and False:
+          if cache_ids and is_id and True:
             word = test_dataset.rev_vocab[id]
             counted += 1
             if not word.endswith('@@'):
@@ -1123,7 +1126,7 @@ class NLM(object):
           # if verbose: print('correct_token:', correct_token)
           if verbose: print('correct_token:', correct_token.replace('@@', ''))
           
-          if cache_ids and is_id:
+          if cache_ids and is_id and False:
             cache_predictions = self._score_cache_contents(session, config, beam_size, test_dataset, \
               list(norm_logits[0]), id_cache, context, remember_state)
             pred_scores = dict()
@@ -1190,7 +1193,7 @@ class NLM(object):
           word = test_dataset.rev_vocab[id]
           if verbose: print(word, prob)
           if word.endswith('@@'):
-            if cache_ids and is_id and False:
+            if cache_ids and is_id and True:
               # if id_cache.has_subtrie(word[-2]) or prob >= SKIP_CACHE_PROB_THRESHOLD:
               if id_cache.has_subtrie(word) or prob >= SKIP_CACHE_PROB_THRESHOLD:
                 # All the initial state vectors are the same so the first is used
@@ -1248,7 +1251,7 @@ class NLM(object):
             for i in range(beam_size):
               id, prob = sorted[i]
               new_prob = candidate.get_parent_prob() * prob
-              if cache_ids and is_id and False:
+              if cache_ids and is_id and True:
                 if not test_dataset.rev_vocab[id].endswith('@@'):
                   if id_cache.has_key(candidate.get_text() + test_dataset.rev_vocab[id]) or new_prob >= SKIP_CACHE_PROB_THRESHOLD:
                     full_tokens_scored += 1
@@ -1285,7 +1288,7 @@ class NLM(object):
         
         full_tokens.sort(reverse=True)
         
-        if cache_ids and is_id:
+        if cache_ids and is_id and False:
           # print('full_tokens:', full_tokens)
           cache_predictions = self._score_cache_contents(session, config, beam_size, test_dataset, \
             list(norm_logits[0]), id_cache, context, remember_state)
