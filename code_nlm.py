@@ -950,7 +950,9 @@ class NLM(object):
     identifiers = 0
     state = session.run(self.reset_state)
     
-    context_history = []
+    context_history = deque[None] * 5
+    ngram_cache = dict()
+    ngram_project_cache = dict()
     project_context_history = []
     id_cache = trie.CharTrie()
     project_id_cache = trie.CharTrie()
@@ -983,6 +985,7 @@ class NLM(object):
       # Reset identifier cache for each file.
       if cache_ids:
           id_cache.clear()
+          ids_in_cache = 0.0
 
       if dynamic:
         test_project = test_projects[files_done]
@@ -995,8 +998,8 @@ class NLM(object):
           # Reset the project's cache of identifiers if one is used.
           if cache_ids:
             print('clearing project cache')
+            ids_in_project_cache = 0.0
             project_id_cache.clear()
-            id_cache.clear()
         last_test_project = test_project
 
       file_data = raw_data[file_start_index:data_covered]
@@ -1096,6 +1099,7 @@ class NLM(object):
         full_tokens_found = 0
         full_tokens = []
 
+        context_history
         if id_cache.has_key(correct_token):
           ids_in_cache += 1.0
         if project_id_cache.has_key(correct_token):
