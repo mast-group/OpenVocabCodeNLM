@@ -950,7 +950,7 @@ class NLM(object):
     identifiers = 0
     state = session.run(self.reset_state)
     
-    context_history = deque[None] * 5
+    context_history = deque([None] * 5, 5)
     ngram_cache = dict()
     ngram_project_cache = dict()
     project_context_history = []
