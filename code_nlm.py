@@ -1450,7 +1450,7 @@ class NLM(object):
     ranked_pred.sort(reverse=True)
     scores = np.asarray([prob for prob, token in ranked_pred])
     scores_sum = sum(scores)
-    scores = [score / scores_sum for score in scores]
+    # scores = [score / scores_sum for score in scores]
     # print(ranked_pred)
     norm_pred = []
     for i in range(len(ranked_pred)):
