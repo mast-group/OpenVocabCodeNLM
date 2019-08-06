@@ -1091,7 +1091,6 @@ class NLM(object):
           if not id_map is None and is_id:
             identifiers += 1
             file_identifiers += 1
-            project_identifiers += 1
           if not in_token:
             correct_subtokens = []
             remember_state = state
