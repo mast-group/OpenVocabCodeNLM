@@ -1169,10 +1169,10 @@ class NLM(object):
                   id_acc10 += 1.0
           if not correct_found:
               rank += 1
-          if cache_ids and is_id: 
-            print(rank)
-            if rank > 10:
-              print(correct_token, full_tokens, cache_predictions)
+          # if cache_ids and is_id: 
+          #   print(rank)
+          #   if rank > 10:
+          #     print(correct_token, full_tokens, cache_predictions)
           
           if cache_ids and is_id and correct_token != '-UNK-': 
             id_cache[correct_token] = True
@@ -1330,10 +1330,10 @@ class NLM(object):
                 id_acc10 += 1.0
             break
         if not correct_found: i += 1
-        if cache_ids and is_id: 
-          print(i + 1)
-          if i + 1 > 10:
-            print(correct_token, full_tokens, cache_predictions)
+        # if cache_ids and is_id: 
+        #   print(i + 1)
+        #   if i + 1 > 10:
+        #     print(correct_token, full_tokens, cache_predictions)
       files_done += 1
       if cache_ids:
         print(id_cache)
