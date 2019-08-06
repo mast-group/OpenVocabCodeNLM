@@ -1200,16 +1200,16 @@ class NLM(object):
           if cache_ids and is_id and correct_token != '-UNK-':
             id_cache[correct_token] = True
             project_id_cache[correct_token] = True
-            if list(context_history) in ngram_cache:
-              ngram_cache[list(context_history)].add(correct_token)
+            if tuple(context_history) in ngram_cache:
+              ngram_cache[tuple(context_history)].add(correct_token)
             else:
-              ngram_cache[list(context_history)] = set()
-              ngram_cache[list(context_history)].add(correct_token)
+              ngram_cache[tuple(context_history)] = set()
+              ngram_cache[tuple(context_history)].add(correct_token)
             if list(context_history) in ngram_project_cache:
-              ngram_project_cache[list(context_history)].add(correct_token)
+              ngram_project_cache[tuple(context_history)].add(correct_token)
             else:
-              ngram_project_cache[list(context_history)] = set()
-              ngram_project_cache[list(context_history)].add(correct_token)
+              ngram_project_cache[tuple(context_history)] = set()
+              ngram_project_cache[tuple(context_history)].add(correct_token)
             context_history.append(correct_token)
           continue
         if FLAGS.token_model: print('???')
