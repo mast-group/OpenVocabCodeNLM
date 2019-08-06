@@ -1165,7 +1165,13 @@ class NLM(object):
                   id_acc5 += 1.0
                 if rank <= 10:
                   id_acc10 += 1.0
-          if cache_ids and is_id: print(rank)
+          if not correct_found:
+              rank += 1
+          if cache_ids and is_id: 
+            print(rank)
+            if rank > 10:
+              print(correct_token, full_tokens, cache_predictions)
+          
           if cache_ids and is_id and correct_token != '-UNK-': 
             id_cache[correct_token] = True
           continue
