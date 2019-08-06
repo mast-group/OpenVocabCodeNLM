@@ -939,6 +939,8 @@ class NLM(object):
 
     ids_in_cache = 0.0
     ids_in_project_cache = 0.0
+    context_history_in_ngram_cache = 0.0
+    context_history_in_ngram_project_cache = 0.0
 
     satisfaction_prob = 0.8
     top_needed = 10
@@ -990,6 +992,8 @@ class NLM(object):
           id_cache.clear()
           ids_in_cache = 0.0
           ids_in_project_cache = 0.0
+          ngram_cache = dict()
+          context_history_in_ngram_cache = 0.0
 
       if dynamic:
         test_project = test_projects[files_done]
@@ -1004,6 +1008,8 @@ class NLM(object):
             print('clearing project cache')
             ids_in_project_cache = 0.0
             project_id_cache.clear()
+            ngram_project_cache = dict()
+            context_history_in_ngram_project_cache = 0.0
         last_test_project = test_project
 
       file_data = raw_data[file_start_index:data_covered]
@@ -1104,10 +1110,14 @@ class NLM(object):
         full_tokens_found = 0
         full_tokens = []
 
-        if id_cache.has_key(correct_token):
+        if is_id and id_cache.has_key(correct_token):
           ids_in_cache += 1.0
-        if project_id_cache.has_key(correct_token):
+        if is_id and project_id_cache.has_key(correct_token):
           ids_in_project_cache += 1.0
+        if is_id and tuple(context_history) in ngram_cache:
+          context_history_in_ngram_cache += 1
+        if is_id and tuple(context_history) in ngram_project_cache:
+          context_history_in_ngram_project_cache += 1
 
         # Rank single subtoken long predictions and keep top_needed (usually 10) best complete token ones
         sorted = list(enumerate(logits))
@@ -1318,6 +1328,17 @@ class NLM(object):
           if is_id:
             id_cache[correct_token] = True
             project_id_cache[correct_token] = True
+            if tuple(context_history) in ngram_cache:
+              ngram_cache[tuple(context_history)].add(correct_token)
+            else:
+              ngram_cache[tuple(context_history)] = set()
+              ngram_cache[tuple(context_history)].add(correct_token)
+            if tuple(context_history) in ngram_project_cache:
+              ngram_project_cache[tuple(context_history)].add(correct_token)
+            else:
+              ngram_project_cache[tuple(context_history)] = set()
+              ngram_project_cache[tuple(context_history)].add(correct_token)
+            context_history.append(correct_token)
         
         full_tokens.sort(reverse=True)
         
@@ -1398,8 +1419,10 @@ class NLM(object):
       if not id_map is None :
         print(id_mrr / identifiers, id_acc1 / identifiers, id_acc3 / identifiers, \
           id_acc5 / identifiers, id_acc10 / identifiers)
-        print(ids_in_cache / file_identifiers)
-        print(ids_in_project_cache / file_identifiers)
+        print('File cache recall', ids_in_cache / file_identifiers)
+        print('Project cache recall', ids_in_project_cache / file_identifiers)
+        print('File context recall', context_history_in_ngram_cache / file_identifiers )
+        print('Project context recall', context_history_in_ngram_project_cache / file_identifiers )
 
     print('Tokens scored:', tokens_done)
     return mrr / tokens_done
