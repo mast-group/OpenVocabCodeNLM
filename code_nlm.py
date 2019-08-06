@@ -1377,7 +1377,7 @@ class NLM(object):
         print(id_mrr / identifiers, id_acc1 / identifiers, id_acc3 / identifiers, \
           id_acc5 / identifiers, id_acc10 / identifiers)
         print(ids_in_cache / identifiers)
-        print(ids_project_cache / identifiers)
+        print(ids_in_project_cache / identifiers)
 
     print('Tokens scored:', tokens_done)
     return mrr / tokens_done
