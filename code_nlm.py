@@ -1205,7 +1205,7 @@ class NLM(object):
             else:
               ngram_cache[tuple(context_history)] = set()
               ngram_cache[tuple(context_history)].add(correct_token)
-            if list(context_history) in ngram_project_cache:
+            if tuple(context_history) in ngram_project_cache:
               ngram_project_cache[tuple(context_history)].add(correct_token)
             else:
               ngram_project_cache[tuple(context_history)] = set()
