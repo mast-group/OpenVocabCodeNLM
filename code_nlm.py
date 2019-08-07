@@ -1119,15 +1119,15 @@ class NLM(object):
         if is_id and tuple(context_history) in ngram_cache:
           context_history_in_ngram_cache += 1
           print('file context hit:', correct_token in ngram_cache[tuple(context_history)], len(ngram_cache[tuple(context_history)]))
-          file_cache_preds = self._score_cache_contents(session, config, beam_size, test_dataset, \
-              list(norm_logits[0]), ngram_cache[tuple(context_history)], context, remember_state)
-          print(file_cache_preds, correct_token)
+          # file_cache_preds = self._score_cache_contents(session, config, beam_size, test_dataset, \
+          #     list(norm_logits[0]), ngram_cache[tuple(context_history)], context, remember_state)
+          # print(file_cache_preds, correct_token)
         if is_id and tuple(context_history) in ngram_project_cache:
           context_history_in_ngram_project_cache += 1
           print('project context hit:', correct_token in ngram_project_cache[tuple(context_history)], len(ngram_project_cache[tuple(context_history)]))
-          project_cache_preds = self._score_cache_contents(session, config, beam_size, test_dataset, \
-              list(norm_logits[0]), ngram_project_cache[tuple(context_history)], context, remember_state)
-          print(project_cache_preds, correct_token)
+          # project_cache_preds = self._score_cache_contents(session, config, beam_size, test_dataset, \
+          #     list(norm_logits[0]), ngram_project_cache[tuple(context_history)], context, remember_state)
+          # print(project_cache_preds, correct_token)
 
         # Rank single subtoken long predictions and keep top_needed (usually 10) best complete token ones
         sorted = list(enumerate(logits))
