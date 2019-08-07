@@ -995,6 +995,7 @@ class NLM(object):
           context_history = deque([None] * 5, 5)
           ngram_cache = dict()
           context_history_in_ngram_cache = 0.0
+          context_history_in_ngram_project_cache = 0.0
 
       if dynamic:
         test_project = test_projects[files_done]
@@ -1010,7 +1011,6 @@ class NLM(object):
             ids_in_project_cache = 0.0
             project_id_cache.clear()
             ngram_project_cache = dict()
-            context_history_in_ngram_project_cache = 0.0
         last_test_project = test_project
 
       file_data = raw_data[file_start_index:data_covered]
