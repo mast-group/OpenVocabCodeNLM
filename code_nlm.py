@@ -1117,8 +1117,10 @@ class NLM(object):
           ids_in_project_cache += 1.0
         if is_id and tuple(context_history) in ngram_cache:
           context_history_in_ngram_cache += 1
+          print('file context hit:', correct_token in ngram_cache[tuple(context_history)])
         if is_id and tuple(context_history) in ngram_project_cache:
           context_history_in_ngram_project_cache += 1
+          print('project context hit:', correct_token in ngram_project_cache[tuple(context_history)])
 
         # Rank single subtoken long predictions and keep top_needed (usually 10) best complete token ones
         sorted = list(enumerate(logits))
