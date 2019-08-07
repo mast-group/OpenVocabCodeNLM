@@ -1112,23 +1112,24 @@ class NLM(object):
         full_tokens_found = 0
         full_tokens = []
 
+        project_cache_preds = None
         if is_id and id_cache.has_key(correct_token):
           ids_in_cache += 1.0
         if is_id and project_id_cache.has_key(correct_token):
           ids_in_project_cache += 1.0
         if is_id and tuple(context_history) in ngram_cache:
           context_history_in_ngram_cache += 1
-          print('file context hit:', correct_token in ngram_cache[tuple(context_history)], len(ngram_cache[tuple(context_history)]))
+          # print('file context hit:', correct_token in ngram_cache[tuple(context_history)], len(ngram_cache[tuple(context_history)]))
           file_cache_preds = self._score_cache_contents(session, config, beam_size, test_dataset, \
               list(norm_logits[0]), ngram_cache[tuple(context_history)], context, remember_state)
-          print(file_cache_preds, correct_token.replace('@@', ''))
+          # print(file_cache_preds, correct_token.replace('@@', ''))
         if is_id and tuple(context_history) in ngram_project_cache:
           context_history_in_ngram_project_cache += 1
-          print('project context hit:', correct_token in ngram_project_cache[tuple(context_history)], len(ngram_project_cache[tuple(context_history)]))
+          # print('project context hit:', correct_token in ngram_project_cache[tuple(context_history)], len(ngram_project_cache[tuple(context_history)]))
           project_cache_preds = self._score_cache_contents(session, config, beam_size, test_dataset, \
               list(norm_logits[0]), ngram_project_cache[tuple(context_history)], context, remember_state)
-          print(project_cache_preds, correct_token.replace('@@', ''))
-          print()
+          # print(project_cache_preds, correct_token.replace('@@', ''))
+          # print()
 
         # Rank single subtoken long predictions and keep top_needed (usually 10) best complete token ones
         sorted = list(enumerate(logits))
@@ -1184,6 +1185,22 @@ class NLM(object):
           #     f_tokens.append((pred_scores[pred], pred))
           #   f_tokens.sort(reverse=True)
           #   full_tokens = f_tokens[: 10]
+          if cache_ids and is_id and project_cache_preds is not None:
+            pred_scores = dict()
+            for prob, pred in project_cache_preds:
+              pred_scores[pred] = CACHE_WEIGHT * prob
+            for prob, prediction in full_tokens:
+              prediction = prediction.replace('@@', '')
+              if prediction in pred_scores:
+                pred_scores[prediction] = pred_scores[prediction] + (1.0 - CACHE_WEIGHT) * prob
+              else:
+                prediction = (1.0 - CACHE_WEIGHT) * prob
+            # sort
+            f_tokens = []
+            for pred in pred_scores:
+              f_tokens.append((pred_scores[pred], pred))
+            f_tokens.sort(reverse=True)
+            full_tokens = f_tokens[: 10]
           
           for prob, prediction in full_tokens:
             if FLAGS.token_model and correct_token == '-UNK-':
@@ -1212,7 +1229,7 @@ class NLM(object):
                   id_acc10 += 1.0
           if not correct_found:
               rank += 1
-          if is_id: print(correct_token.replace('@@', ''), full_tokens, '\n')
+          # if is_id: print(correct_token.replace('@@', ''), full_tokens, '\n')
           # if cache_ids and is_id: 
           #   print(rank)
           #   if rank > 10:
@@ -1376,6 +1393,23 @@ class NLM(object):
         #   # print('new full tokens:', full_tokens)
         #   # print(correct_token)
         #   # print()
+
+        if cache_ids and is_id and project_cache_preds is not None:
+            pred_scores = dict()
+            for prob, pred in project_cache_preds:
+              pred_scores[pred] = CACHE_WEIGHT * prob
+            for prob, prediction in full_tokens:
+              prediction = prediction.replace('@@', '')
+              if prediction in pred_scores:
+                pred_scores[prediction] = pred_scores[prediction] + (1.0 - CACHE_WEIGHT) * prob
+              else:
+                prediction = (1.0 - CACHE_WEIGHT) * prob
+            # sort
+            f_tokens = []
+            for pred in pred_scores:
+              f_tokens.append((pred_scores[pred], pred))
+            f_tokens.sort(reverse=True)
+            full_tokens = f_tokens[: 10]
         
         correct_found = False
         for i, answer in enumerate(full_tokens):
@@ -1403,7 +1437,7 @@ class NLM(object):
         #   print(i + 1)
         #   if i + 1 > 10:
         #     print(correct_token, full_tokens, cache_predictions)
-        if is_id: print(correct_token.replace('@@', ''), full_tokens, '\n')
+        # if is_id: print(correct_token.replace('@@', ''), full_tokens, '\n')
       files_done += 1
       if cache_ids:
         print(id_cache)
