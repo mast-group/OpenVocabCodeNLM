@@ -1128,6 +1128,7 @@ class NLM(object):
           project_cache_preds = self._score_cache_contents(session, config, beam_size, test_dataset, \
               list(norm_logits[0]), ngram_project_cache[tuple(context_history)], context, remember_state)
           print(project_cache_preds, correct_token)
+          print()
 
         # Rank single subtoken long predictions and keep top_needed (usually 10) best complete token ones
         sorted = list(enumerate(logits))
@@ -1211,6 +1212,7 @@ class NLM(object):
                   id_acc10 += 1.0
           if not correct_found:
               rank += 1
+          print(full_tokens, '\n')
           # if cache_ids and is_id: 
           #   print(rank)
           #   if rank > 10:
@@ -1401,6 +1403,7 @@ class NLM(object):
         #   print(i + 1)
         #   if i + 1 > 10:
         #     print(correct_token, full_tokens, cache_predictions)
+        print(full_tokens, '\n')
       files_done += 1
       if cache_ids:
         print(id_cache)
