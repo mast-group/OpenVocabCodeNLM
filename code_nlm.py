@@ -1121,13 +1121,13 @@ class NLM(object):
           print('file context hit:', correct_token in ngram_cache[tuple(context_history)], len(ngram_cache[tuple(context_history)]))
           file_cache_preds = self._score_cache_contents(session, config, beam_size, test_dataset, \
               list(norm_logits[0]), ngram_cache[tuple(context_history)], context, remember_state)
-          print(file_cache_preds, correct_token)
+          print(file_cache_preds, correct_token.replace('@@', ''))
         if is_id and tuple(context_history) in ngram_project_cache:
           context_history_in_ngram_project_cache += 1
           print('project context hit:', correct_token in ngram_project_cache[tuple(context_history)], len(ngram_project_cache[tuple(context_history)]))
           project_cache_preds = self._score_cache_contents(session, config, beam_size, test_dataset, \
               list(norm_logits[0]), ngram_project_cache[tuple(context_history)], context, remember_state)
-          print(project_cache_preds, correct_token)
+          print(project_cache_preds, correct_token.replace('@@', ''))
           print()
 
         # Rank single subtoken long predictions and keep top_needed (usually 10) best complete token ones
@@ -1212,7 +1212,7 @@ class NLM(object):
                   id_acc10 += 1.0
           if not correct_found:
               rank += 1
-          print(full_tokens, '\n')
+          if is_id: print(correct_token.replace('@@', ''), full_tokens, '\n')
           # if cache_ids and is_id: 
           #   print(rank)
           #   if rank > 10:
@@ -1403,7 +1403,7 @@ class NLM(object):
         #   print(i + 1)
         #   if i + 1 > 10:
         #     print(correct_token, full_tokens, cache_predictions)
-        print(full_tokens, '\n')
+        if is_id: print(correct_token.replace('@@', ''), full_tokens, '\n')
       files_done += 1
       if cache_ids:
         print(id_cache)
