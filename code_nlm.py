@@ -1119,9 +1119,15 @@ class NLM(object):
         if is_id and tuple(context_history) in ngram_cache:
           context_history_in_ngram_cache += 1
           print('file context hit:', correct_token in ngram_cache[tuple(context_history)], len(ngram_cache[tuple(context_history)]))
+          file_cache_preds = self._score_cache_contents(session, config, beam_size, test_dataset, \
+              list(norm_logits[0]), ngram_cache[tuple(context_history)], context, remember_state)
+          print(file_cache_preds, correct_token)
         if is_id and tuple(context_history) in ngram_project_cache:
           context_history_in_ngram_project_cache += 1
           print('project context hit:', correct_token in ngram_project_cache[tuple(context_history)], len(ngram_project_cache[tuple(context_history)]))
+          project_cache_preds = self._score_cache_contents(session, config, beam_size, test_dataset, \
+              list(norm_logits[0]), ngram_project_cache[tuple(context_history)], context, remember_state)
+          print(project_cache_preds, correct_token)
 
         # Rank single subtoken long predictions and keep top_needed (usually 10) best complete token ones
         sorted = list(enumerate(logits))
@@ -1159,24 +1165,24 @@ class NLM(object):
           # if verbose: print('correct_token:', correct_token)
           if verbose: print('correct_token:', correct_token.replace('@@', ''))
           
-          if cache_ids and is_id:
-            cache_predictions = self._score_cache_contents(session, config, beam_size, test_dataset, \
-              list(norm_logits[0]), id_cache, context, remember_state)
-            pred_scores = dict()
-            for prob, pred in cache_predictions:
-              pred_scores[pred] = CACHE_WEIGHT * prob
-            for prob, prediction in full_tokens:
-              prediction = prediction.replace('@@', '')
-              if prediction in pred_scores:
-                pred_scores[prediction] = pred_scores[prediction] + (1.0 - CACHE_WEIGHT) * prob
-              else:
-                prediction = (1.0 - CACHE_WEIGHT) * prob
-            # sort
-            f_tokens = []
-            for pred in pred_scores:
-              f_tokens.append((pred_scores[pred], pred))
-            f_tokens.sort(reverse=True)
-            full_tokens = f_tokens[: 10]
+          # if cache_ids and is_id:
+          #   # cache_predictions = self._score_cache_contents(session, config, beam_size, test_dataset, \
+          #   #   list(norm_logits[0]), id_cache, context, remember_state)
+          #   pred_scores = dict()
+          #   for prob, pred in cache_predictions:
+          #     pred_scores[pred] = CACHE_WEIGHT * prob
+          #   for prob, prediction in full_tokens:
+          #     prediction = prediction.replace('@@', '')
+          #     if prediction in pred_scores:
+          #       pred_scores[prediction] = pred_scores[prediction] + (1.0 - CACHE_WEIGHT) * prob
+          #     else:
+          #       prediction = (1.0 - CACHE_WEIGHT) * prob
+          #   # sort
+          #   f_tokens = []
+          #   for pred in pred_scores:
+          #     f_tokens.append((pred_scores[pred], pred))
+          #   f_tokens.sort(reverse=True)
+          #   full_tokens = f_tokens[: 10]
           
           for prob, prediction in full_tokens:
             if FLAGS.token_model and correct_token == '-UNK-':
@@ -1346,28 +1352,28 @@ class NLM(object):
         
         full_tokens.sort(reverse=True)
         
-        if cache_ids and is_id:
-          # print('full_tokens:', full_tokens)
-          cache_predictions = self._score_cache_contents(session, config, beam_size, test_dataset, \
-            list(norm_logits[0]), id_cache, context, remember_state)
-          pred_scores = dict()
-          for prob, pred in cache_predictions:
-            pred_scores[pred] = CACHE_WEIGHT * prob
-          for prob, prediction in full_tokens:
-            prediction = prediction.replace('@@', '')
-            if prediction in pred_scores:
-              pred_scores[prediction] = pred_scores[prediction] + (1.0 - CACHE_WEIGHT) * prob
-            else:
-              prediction = (1.0 - CACHE_WEIGHT) * prob
-          # sort
-          f_tokens = []
-          for pred in pred_scores:
-            f_tokens.append((pred_scores[pred], pred))
-          f_tokens.sort(reverse=True)
-          full_tokens = f_tokens[: 10]
-          # print('new full tokens:', full_tokens)
-          # print(correct_token)
-          # print()
+        # if cache_ids and is_id:
+        #   # print('full_tokens:', full_tokens)
+        #   # cache_predictions = self._score_cache_contents(session, config, beam_size, test_dataset, \
+        #   #   list(norm_logits[0]), id_cache, context, remember_state)
+        #   pred_scores = dict()
+        #   for prob, pred in cache_predictions:
+        #     pred_scores[pred] = CACHE_WEIGHT * prob
+        #   for prob, prediction in full_tokens:
+        #     prediction = prediction.replace('@@', '')
+        #     if prediction in pred_scores:
+        #       pred_scores[prediction] = pred_scores[prediction] + (1.0 - CACHE_WEIGHT) * prob
+        #     else:
+        #       prediction = (1.0 - CACHE_WEIGHT) * prob
+        #   # sort
+        #   f_tokens = []
+        #   for pred in pred_scores:
+        #     f_tokens.append((pred_scores[pred], pred))
+        #   f_tokens.sort(reverse=True)
+        #   full_tokens = f_tokens[: 10]
+        #   # print('new full tokens:', full_tokens)
+        #   # print(correct_token)
+        #   # print()
         
         correct_found = False
         for i, answer in enumerate(full_tokens):
@@ -1433,11 +1439,26 @@ class NLM(object):
   
 
   def _score_cache_contents(self, session, config, beam_size, test_dataset, logits, id_cache, context, state):
+    """[summary]
+    
+    Arguments:
+        session {[type]} -- [description]
+        config {[type]} -- [description]
+        beam_size {[type]} -- [description]
+        test_dataset {[type]} -- [description]
+        logits {[type]} -- [description]
+        id_cache {[type]} -- [description]
+        context {[type]} -- [description]
+        state {[type]} -- [description]
+    
+    Returns:
+        [type] -- [description]
+    """
     ranked_pred = []
     heapq.heapify(ranked_pred)
     candidates_pq = []
     heapq.heapify(candidates_pq)
-    for identifier in id_cache.iterkeys():
+    for identifier in id_cache:
       # print(identifier)
       if not '@@' in identifier:
         index = test_dataset.vocab[identifier]
