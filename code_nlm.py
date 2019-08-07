@@ -992,7 +992,8 @@ class NLM(object):
           id_cache.clear()
           ids_in_cache = 0.0
           ids_in_project_cache = 0.0
-          context_history = deque([None] * 5, 5)
+          NGRAM_SIZE = 6
+          context_history = deque([None] * (NGRAM_SIZE - 1), (NGRAM_SIZE - 1))
           ngram_cache = dict()
           context_history_in_ngram_cache = 0.0
           context_history_in_ngram_project_cache = 0.0
