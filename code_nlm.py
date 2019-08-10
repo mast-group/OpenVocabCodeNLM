@@ -1466,10 +1466,11 @@ class NLM(object):
       if not id_map is None :
         print(id_mrr / identifiers, id_acc1 / identifiers, id_acc3 / identifiers, \
           id_acc5 / identifiers, id_acc10 / identifiers)
-        print('File cache recall', ids_in_cache / file_identifiers)
-        print('Project cache recall', ids_in_project_cache / file_identifiers)
-        print('File context recall', context_history_in_ngram_cache / file_identifiers )
-        print('Project context recall', context_history_in_ngram_project_cache / file_identifiers )
+        if file_identifiers > 0:
+          print('File cache recall', ids_in_cache / file_identifiers)
+          print('Project cache recall', ids_in_project_cache / file_identifiers)
+          print('File context recall', context_history_in_ngram_cache / file_identifiers )
+          print('Project context recall', context_history_in_ngram_project_cache / file_identifiers )
 
     print('Tokens scored:', tokens_done)
     return mrr / tokens_done
