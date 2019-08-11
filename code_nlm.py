@@ -67,6 +67,7 @@ flags.DEFINE_float("max_grad_norm", 5.0, "Clip gradients to this norm")
 flags.DEFINE_float("lr_decay", 0.5, "Learning rate decay. Default is 0.5 which halves the learning rate.")
 
 flags.DEFINE_float("file_cache_weight", 0.2, "Weight of the file cache.")
+flags.DEFINE_integer("cache_order", 6, "Batch size during test")
 
 flags.DEFINE_integer("thresh", 0, "Threshold for vocabulary inclusion.")
 flags.DEFINE_boolean("unk", True, "use -UNK- token to model OOV.")
@@ -953,7 +954,8 @@ class NLM(object):
     file_identifiers = 0
     state = session.run(self.reset_state)
     
-    context_history = deque([None] * 5, 5)
+    context_size = FLAGS.cache_order - 1
+    context_history = deque([None] * context_size, context_size)
     ngram_cache = dict()
     ngram_project_cache = dict()
     # project_context_history = []
