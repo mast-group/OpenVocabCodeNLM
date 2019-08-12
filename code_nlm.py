@@ -1309,6 +1309,7 @@ class NLM(object):
           if FLAGS.gru:
             print(self.reset_state)
             for i, h in enumerate(self.reset_state):
+              print(i)
               feed_dict[h] = new_state[i]
           else:
             for i, (c, h) in enumerate(self.reset_state):
