@@ -1311,7 +1311,6 @@ class NLM(object):
                         self.keep_probability: 1.0
                       }
           if FLAGS.gru:
-            print(self.reset_state)
             for i, h in enumerate(self.reset_state):
               feed_dict[h] = new_state[i]
           else:
