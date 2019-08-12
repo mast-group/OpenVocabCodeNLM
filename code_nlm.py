@@ -1028,7 +1028,6 @@ class NLM(object):
       remember_state = state
       train_state = session.run(self.reset_state)
       in_token = False
-      print(state)
 
       correct_token = ''
       train_start = 0
@@ -1314,7 +1313,6 @@ class NLM(object):
           if FLAGS.gru:
             print(self.reset_state)
             for i, h in enumerate(self.reset_state):
-              print(i)
               feed_dict[h] = new_state[i]
           else:
             for i, (c, h) in enumerate(self.reset_state):
