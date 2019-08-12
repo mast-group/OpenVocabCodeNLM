@@ -1265,19 +1265,20 @@ class NLM(object):
           word = test_dataset.rev_vocab[id]
           if verbose: print(word, prob)
           if word.endswith('@@'):
+            remember_vectors = tuple([remember_state[l][0][0] for l in range(self.num_layers)])
             if cache_ids and is_id and False:
               # if id_cache.has_subtrie(word[-2]) or prob >= SKIP_CACHE_PROB_THRESHOLD:
               if id_cache.has_subtrie(word) or prob >= SKIP_CACHE_PROB_THRESHOLD:
                 # All the initial state vectors are the same so the first is used
                 # candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word[:-2], -prob,
                 #                                       tuple(tokens_before) + (word,))))
-                candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word, -prob,
+                candidates_pq.append((-prob, Candidate(remember_vectors, id, word, -prob,
                                                       tuple(tokens_before) + (word,))))
             else:
               # All the initial state vectors are the same so the first is used
               # candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word[:-2], -prob,
               #                                       tuple(tokens_before) + (word,))))
-              candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word, -prob,
+              candidates_pq.append((-prob, Candidate(remember_vectors, id, word, -prob,
                                                     tuple(tokens_before) + (word,))))
           if len(candidates_pq) >= beam_size:
             break
@@ -1292,12 +1293,16 @@ class NLM(object):
           search_iterations += 1
           # Create a beam of new candidates until 500 full tokens have been produced
           to_expand = []
-          new_state = (np.empty([beam_size, config.hidden_size]), )
+          new_state = tuple([np.empty([beam_size, config.hidden_size]) for l in range(self.num_layers)])
+          # new_state = (np.empty([beam_size, config.hidden_size]), )
           for c_id in range(beam_size):
             if len(candidates_pq) == 0:
               break
             to_expand.append(heapq.heappop(candidates_pq))
-            new_state[0][c_id] = to_expand[-1][1].get_state_vec()
+            state_vec = to_expand[-1][1].get_state_vec()
+            for l in range(self.num_layers):
+              new_state[l][c_id] = state_vec[l]
+            # new_state[0][c_id] = to_expand[-1][1].get_state_vec()
 
           if len(to_expand) < beam_size: break
           if -to_expand[0][1].get_parent_prob() < worst_full_score:
@@ -1337,7 +1342,8 @@ class NLM(object):
                     # word = test_dataset.rev_vocab[id][:-2]
                     word = test_dataset.rev_vocab[id]
                     if id_cache.has_subtrie(candidate.get_text() + word) or new_prob >= SKIP_CACHE_PROB_THRESHOLD:
-                      heapq.heappush(candidates_pq, (new_prob, Candidate(new_state[0][c_id], id, candidate.get_text() + word,
+                      new_state_vectors = tuple([new_state[l][c_id] for l in range(self.num_layers)])
+                      heapq.heappush(candidates_pq, (new_prob, Candidate(new_state_vectors, id, candidate.get_text() + word,
                                                                         new_prob, tuple(candidate.get_subtoken_history()) +
                                                                         (test_dataset.rev_vocab[id],))))
               else:
@@ -1350,7 +1356,8 @@ class NLM(object):
                 else:
                   # word = test_dataset.rev_vocab[id][:-2]
                   word = test_dataset.rev_vocab[id]
-                  heapq.heappush(candidates_pq, (new_prob, Candidate(new_state[0][c_id], id, candidate.get_text() + word,
+                  new_state_vectors = tuple([new_state[l][c_id] for l in range(self.num_layers)])
+                  heapq.heappush(candidates_pq, (new_prob, Candidate(new_state_vectors, id, candidate.get_text() + word,
                                                                     new_prob, tuple(candidate.get_subtoken_history()) +
                                                                     (test_dataset.rev_vocab[id],))))
 
@@ -1512,23 +1519,29 @@ class NLM(object):
         identifier_parts = identifier.split('@@')
         index = test_dataset.vocab[identifier_parts[0] + '@@']
         prob = logits[index]
-        candidates_pq.append((-prob, Candidate(state[0][0], index, identifier_parts, -prob, [0])))
+        vectors = [state[l][0][0] for l in range(self.num_layers)]
+        candidates_pq.append((-prob, Candidate(vectors, index, identifier_parts, -prob, [0])))
         # unscored.append((identifier_parts, logits[index]))
     # print(ranked_pred)
     # print(candidates_pq)
     
     while len(candidates_pq) > 0:
       to_expand = []
-      new_state = (np.empty([beam_size, config.hidden_size]), )
+      new_state = tuple([np.empty([beam_size, config.hidden_size]) for l in range(self.num_layers)])
+      # new_state = (np.empty([beam_size, config.hidden_size]), )
       for c_id in range(beam_size):
         if len(candidates_pq) == 0:
           break
         to_expand.append(heapq.heappop(candidates_pq))
-        new_state[0][c_id] = to_expand[-1][1].get_state_vec()
+        state_vec = to_expand[-1][1].get_state_vec()
+        for l in range(self.num_layers):
+          new_state[l][c_id] = state_vec[l]
+        # new_state[0][c_id] = to_expand[-1][1].get_state_vec()
 
       missing = beam_size - len(to_expand)
       for m in range(missing):
-        to_expand.append((0.0, Candidate(state[0][0], 0, [], 0.0, [0])))
+        state_vectors = tuple([state[l][0][0] for l in range(self.num_layers)])
+        to_expand.append((0.0, Candidate(state_vectors, 0, [], 0.0, [0])))
 
       # if len(to_expand) < beam_size: break
 
@@ -1569,7 +1582,8 @@ class NLM(object):
           new_prob = candidate.get_parent_prob() * prob
           # print('Pushing new candidate:', (new_prob, Candidate(new_state[0][c_id], index, candidate.get_text(),
           #                                                       new_prob, list(candidate.get_subtoken_history()) + [next_part_index])))
-          heapq.heappush(candidates_pq, (new_prob, Candidate(new_state[0][c_id], index, candidate.get_text(),
+          new_state_vectors = tuple([new_state[l][c_id] for l in range(self.num_layers)])
+          heapq.heappush(candidates_pq, (new_prob, Candidate(new_state_vectors, index, candidate.get_text(),
                                                                 new_prob, list(candidate.get_subtoken_history()) + [next_part_index])))
     
     ranked_pred.sort(reverse=True)
