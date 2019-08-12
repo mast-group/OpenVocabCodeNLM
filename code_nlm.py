@@ -1028,6 +1028,7 @@ class NLM(object):
       remember_state = state
       train_state = session.run(self.reset_state)
       in_token = False
+      print(state)
 
       correct_token = ''
       train_start = 0
