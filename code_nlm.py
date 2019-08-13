@@ -78,6 +78,8 @@ flags.DEFINE_boolean("cross_entropy", False, "Print cross-entropy for validation
 flags.DEFINE_boolean("token_model", False, "Whether it is a token level model.")
 flags.DEFINE_boolean("completion_unk_wrong", False, "Whether completing -UNK- should contribute in MRR. Set to "
                                                     "True for Allamanis et al. heuristic subtoken model.")
+flags.DEFINE_boolean("stop_early", False, "Whether to stop completion after 1 million tokens.")
+
 flags.DEFINE_boolean("verbose", False, "Verbose for completion.")
 
 
@@ -980,7 +982,7 @@ class NLM(object):
     file_start_index = 0
     while data_covered < data_len:
       # Stop when 1000000 test tokens have been scored.
-      if tokens_done > 1000000:
+      if tokens_done > 1000000 and FLAGS.stop_early:
         break
 
       # Create minibatches for the next file
