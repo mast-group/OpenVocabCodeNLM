@@ -78,8 +78,6 @@ flags.DEFINE_boolean("cross_entropy", False, "Print cross-entropy for validation
 flags.DEFINE_boolean("token_model", False, "Whether it is a token level model.")
 flags.DEFINE_boolean("completion_unk_wrong", False, "Whether completing -UNK- should contribute in MRR. Set to "
                                                     "True for Allamanis et al. heuristic subtoken model.")
-flags.DEFINE_boolean("stop_early", False, "Whether to stop completion after 1 million tokens.")
-
 flags.DEFINE_boolean("verbose", False, "Verbose for completion.")
 
 
@@ -922,7 +920,7 @@ class NLM(object):
     print('Is it correct perplexity:', sum([perp * weight for perp, weight in zip(test_losses, len_weights)]))
     return test_losses_sum / ctr
 
-  def completion(self, session, config, test_dataset, test_projects, beam_size, dynamic=False, id_map=None, cache_ids=False):
+  def completion(self, session, config, test_dataset, test_projects, beam_size, dynamic=False, id_map=None, cache_ids=False, token_map=None):
     """
     Runs code the code completion scenario. Dynamic update can be performed but by default is turned off.
     :param session: The TF session in which operations should be run.
@@ -982,7 +980,7 @@ class NLM(object):
     file_start_index = 0
     while data_covered < data_len:
       # Stop when 1000000 test tokens have been scored.
-      if tokens_done > 1000000 and FLAGS.stop_early:
+      if tokens_done > 1000000:
         break
 
       # Create minibatches for the next file
@@ -1023,7 +1021,10 @@ class NLM(object):
 
       if not id_map is None: file_ids = id_map[files_done] + [0]
       else: file_ids = [0] * (len(file_data) - 1)
-
+      
+      if not token_map is None: file_tokens = token_map[files_done]
+      else: file_tokens = [0] * (len(file_data) - 1)
+      
       tokens_before = deque([None, test_dataset.rev_vocab[file_data[0]]], 2)
 
       state = session.run(self.reset_state)
@@ -1084,7 +1085,7 @@ class NLM(object):
         # if train_start > 0 and is_id:
         #   self._score_cache_contents(session, config, beam_size, test_dataset, list(norm_logits[0]), id_cache, context, state)
         
-        if correct_word.endswith('@@'):
+        if correct_word.endswith('@@') or (token_map is not None and not file_tokens[subtoken_id]):
           if not in_token:
             correct_subtokens = []
             remember_state = state
@@ -1208,7 +1209,7 @@ class NLM(object):
           for prob, prediction in full_tokens:
             if FLAGS.token_model and correct_token == '-UNK-':
               break
-            if correct_token == '-UNK-' and FLAGS.completion_unk_wrong:
+            if (correct_token == '-UNK-' or '-UNK-' in correct_subtokens) and FLAGS.completion_unk_wrong:
                 break
             if verbose: print(prob, prediction)
             if not correct_found:
@@ -1266,20 +1267,19 @@ class NLM(object):
           word = test_dataset.rev_vocab[id]
           if verbose: print(word, prob)
           if word.endswith('@@'):
-            remember_vectors = tuple([remember_state[l][0][0] for l in range(self.num_layers)])
             if cache_ids and is_id and False:
               # if id_cache.has_subtrie(word[-2]) or prob >= SKIP_CACHE_PROB_THRESHOLD:
               if id_cache.has_subtrie(word) or prob >= SKIP_CACHE_PROB_THRESHOLD:
                 # All the initial state vectors are the same so the first is used
                 # candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word[:-2], -prob,
                 #                                       tuple(tokens_before) + (word,))))
-                candidates_pq.append((-prob, Candidate(remember_vectors, id, word, -prob,
+                candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word, -prob,
                                                       tuple(tokens_before) + (word,))))
             else:
               # All the initial state vectors are the same so the first is used
               # candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word[:-2], -prob,
               #                                       tuple(tokens_before) + (word,))))
-              candidates_pq.append((-prob, Candidate(remember_vectors, id, word, -prob,
+              candidates_pq.append((-prob, Candidate(remember_state[0][0], id, word, -prob,
                                                     tuple(tokens_before) + (word,))))
           if len(candidates_pq) >= beam_size:
             break
@@ -1294,16 +1294,12 @@ class NLM(object):
           search_iterations += 1
           # Create a beam of new candidates until 500 full tokens have been produced
           to_expand = []
-          new_state = tuple([np.empty([beam_size, config.hidden_size]) for l in range(self.num_layers)])
-          # new_state = (np.empty([beam_size, config.hidden_size]), )
+          new_state = (np.empty([beam_size, config.hidden_size]), )
           for c_id in range(beam_size):
             if len(candidates_pq) == 0:
               break
             to_expand.append(heapq.heappop(candidates_pq))
-            state_vec = to_expand[-1][1].get_state_vec()
-            for l in range(self.num_layers):
-              new_state[l][c_id] = state_vec[l]
-            # new_state[0][c_id] = to_expand[-1][1].get_state_vec()
+            new_state[0][c_id] = to_expand[-1][1].get_state_vec()
 
           if len(to_expand) < beam_size: break
           if -to_expand[0][1].get_parent_prob() < worst_full_score:
@@ -1341,8 +1337,7 @@ class NLM(object):
                     # word = test_dataset.rev_vocab[id][:-2]
                     word = test_dataset.rev_vocab[id]
                     if id_cache.has_subtrie(candidate.get_text() + word) or new_prob >= SKIP_CACHE_PROB_THRESHOLD:
-                      new_state_vectors = tuple([new_state[l][c_id] for l in range(self.num_layers)])
-                      heapq.heappush(candidates_pq, (new_prob, Candidate(new_state_vectors, id, candidate.get_text() + word,
+                      heapq.heappush(candidates_pq, (new_prob, Candidate(new_state[0][c_id], id, candidate.get_text() + word,
                                                                         new_prob, tuple(candidate.get_subtoken_history()) +
                                                                         (test_dataset.rev_vocab[id],))))
               else:
@@ -1355,8 +1350,7 @@ class NLM(object):
                 else:
                   # word = test_dataset.rev_vocab[id][:-2]
                   word = test_dataset.rev_vocab[id]
-                  new_state_vectors = tuple([new_state[l][c_id] for l in range(self.num_layers)])
-                  heapq.heappush(candidates_pq, (new_prob, Candidate(new_state_vectors, id, candidate.get_text() + word,
+                  heapq.heappush(candidates_pq, (new_prob, Candidate(new_state[0][c_id], id, candidate.get_text() + word,
                                                                     new_prob, tuple(candidate.get_subtoken_history()) +
                                                                     (test_dataset.rev_vocab[id],))))
 
@@ -1518,29 +1512,23 @@ class NLM(object):
         identifier_parts = identifier.split('@@')
         index = test_dataset.vocab[identifier_parts[0] + '@@']
         prob = logits[index]
-        vectors = [state[l][0][0] for l in range(self.num_layers)]
-        candidates_pq.append((-prob, Candidate(vectors, index, identifier_parts, -prob, [0])))
+        candidates_pq.append((-prob, Candidate(state[0][0], index, identifier_parts, -prob, [0])))
         # unscored.append((identifier_parts, logits[index]))
     # print(ranked_pred)
     # print(candidates_pq)
     
     while len(candidates_pq) > 0:
       to_expand = []
-      new_state = tuple([np.empty([beam_size, config.hidden_size]) for l in range(self.num_layers)])
-      # new_state = (np.empty([beam_size, config.hidden_size]), )
+      new_state = (np.empty([beam_size, config.hidden_size]), )
       for c_id in range(beam_size):
         if len(candidates_pq) == 0:
           break
         to_expand.append(heapq.heappop(candidates_pq))
-        state_vec = to_expand[-1][1].get_state_vec()
-        for l in range(self.num_layers):
-          new_state[l][c_id] = state_vec[l]
-        # new_state[0][c_id] = to_expand[-1][1].get_state_vec()
+        new_state[0][c_id] = to_expand[-1][1].get_state_vec()
 
       missing = beam_size - len(to_expand)
       for m in range(missing):
-        state_vectors = tuple([state[l][0][0] for l in range(self.num_layers)])
-        to_expand.append((0.0, Candidate(state_vectors, 0, [], 0.0, [0])))
+        to_expand.append((0.0, Candidate(state[0][0], 0, [], 0.0, [0])))
 
       # if len(to_expand) < beam_size: break
 
@@ -1581,8 +1569,7 @@ class NLM(object):
           new_prob = candidate.get_parent_prob() * prob
           # print('Pushing new candidate:', (new_prob, Candidate(new_state[0][c_id], index, candidate.get_text(),
           #                                                       new_prob, list(candidate.get_subtoken_history()) + [next_part_index])))
-          new_state_vectors = tuple([new_state[l][c_id] for l in range(self.num_layers)])
-          heapq.heappush(candidates_pq, (new_prob, Candidate(new_state_vectors, index, candidate.get_text(),
+          heapq.heappush(candidates_pq, (new_prob, Candidate(new_state[0][c_id], index, candidate.get_text(),
                                                                 new_prob, list(candidate.get_subtoken_history()) + [next_part_index])))
     
     ranked_pred.sort(reverse=True)
