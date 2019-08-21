@@ -50,6 +50,8 @@ flags.DEFINE_string("test_proj_filename", None, "The file that contains the test
 flags.DEFINE_string("identifier_map", None, "The file that contains information about which tokens are identifiers.")
 flags.DEFINE_boolean("cache_ids", False, "Set to True to cache project identifiers during completion.")
 flags.DEFINE_string("BPE", None, "The file containing the BPE encoding.")
+flags.DEFINE_string("subtoken_map", None, "Contains the mapping from heyristic subtokens to tokens.")
+
 flags.DEFINE_string("output_probs_file", "predictionProbabilities.txt", "The file to store output probabilities.")
 
 flags.DEFINE_integer("num_layers", 1, "Number of Layers. Using a single layer is advised.")
@@ -2208,9 +2210,16 @@ def main(_):
             with open(FLAGS.identifier_map, 'r') as f:
               for line in f:
                 id_map.append(ast.literal_eval(line.rstrip('\n')))
+          
+          token_map = None
+          if FLAGS.subtoken_map:
+            token_map = []
+            with open(FLAGS.subtoken_map, 'r') as f:
+              for line in f:
+                token_map.append(ast.literal_eval(line.rstrip('\n')))
 
           mrr = model.completion(session, config, test_dataset, test_proj_lines, config.batch_size, \
-            FLAGS.dynamic, id_map, FLAGS.cache_ids)
+            FLAGS.dynamic, id_map, FLAGS.cache_ids, token_map)
           print(mrr)
       print("Total time %s" % timedelta(seconds=time.time() - start_time))
       print("Done completion!")
