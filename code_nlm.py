@@ -1419,6 +1419,8 @@ class NLM(object):
         
         correct_found = False
         for i, answer in enumerate(full_tokens):
+          if (correct_token == '-UNK-' or '-UNK-' in correct_subtokens) and FLAGS.completion_unk_wrong:
+                break
           prob, prediction = answer
           if verbose: print(-prob, prediction)
           if prediction.replace('@@', '') == correct_token.replace('@@', ''):
