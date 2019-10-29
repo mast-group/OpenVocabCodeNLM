@@ -27,14 +27,17 @@ import tensorflow as tf
 import reader
 
 # BPE imports
-import codecs
-from subword_nmt.apply_bpe import BPE, read_vocabulary
+# import codecs
+# from subword_nmt.apply_bpe import BPE, read_vocabulary
 
 
 
 flags = tf.flags
+# Path options 
 flags.DEFINE_string("data_path", None, "Path to folder containing training/test data.")
 flags.DEFINE_string("train_dir", None, "Output directory for saving the model.")
+
+# Scenario options. Training is default so, no option for it.
 flags.DEFINE_boolean("predict", False, "Set to True for computing predictability.")
 flags.DEFINE_boolean("test", False, "Set to True for computing test perplexity.")
 flags.DEFINE_boolean("dynamic_test", False, "Set to True for performing dynamic train-testing perplexity calculation (only one train epoch).")
@@ -43,37 +46,40 @@ flags.DEFINE_boolean("completion", False, "Set to True to run code completion ex
 flags.DEFINE_boolean("maintenance_completion", False, "Set to True to run maintenance code completion experiment")
 flags.DEFINE_boolean("dynamic", False, "Set to True to run dynamic code completion experiment.")
 
+# Filename/path options
 flags.DEFINE_string("train_filename", None, "The train file on which to train.")
 flags.DEFINE_string("validation_filename", None, "The test file on which to run validation.")
 flags.DEFINE_string("test_filename", None, "The test file on which to compute perplexity or predictability.")
 flags.DEFINE_string("test_proj_filename", None, "The file that contains the test project name for each test instance.")
 flags.DEFINE_string("identifier_map", None, "The file that contains information about which tokens are identifiers.")
 flags.DEFINE_boolean("cache_ids", False, "Set to True to cache project identifiers during completion.")
-flags.DEFINE_string("BPE", None, "The file containing the BPE encoding.")
+# flags.DEFINE_string("BPE", None, "The file containing the BPE encoding.")
 flags.DEFINE_string("subtoken_map", None, "Contains the mapping from heyristic subtokens to tokens.")
 
-flags.DEFINE_string("output_probs_file", "predictionProbabilities.txt", "The file to store output probabilities.")
+# flags.DEFINE_string("output_probs_file", "predictionProbabilities.txt", "The file to store output probabilities.")
 
+# Network architecture/hyper-parameter options
 flags.DEFINE_integer("num_layers", 1, "Number of Layers. Using a single layer is advised.")
 flags.DEFINE_integer("hidden_size", 512, "Hidden size. Number of dimensions for the embeddings and RNN hidden state.")
 flags.DEFINE_float("keep_prob", 0.5, "Keep probability = 1.0 - dropout probability.")
 flags.DEFINE_integer("vocab_size", 25000, "Vocabulary size")
-flags.DEFINE_integer("steps_per_checkpoint", 1000, "Number of steps for printing stats (validation is run) and checkpointing the model. Must be increased by 'a lot' for large training corpora.")
+flags.DEFINE_boolean("gru", False, "Use a GRU cell. Must be set to True to use a GRU, otherwise an LSTM will be used.")
+flags.DEFINE_integer("steps_per_checkpoint", 5000, "Number of steps for printing stats (validation is run) and checkpointing the model. Must be increased by 'a lot' for large training corpora.")
 flags.DEFINE_integer("max_epoch", 30, "Max number training epochs to run.")
 flags.DEFINE_integer("batch_size", 32, "Batch size")
-flags.DEFINE_integer("test_batch_size", 10, "Batch size during test")
+flags.DEFINE_integer("test_batch_size", 10, "Batch size during predictability test")
 flags.DEFINE_integer("num_steps", 200, "Sequence length.")
 flags.DEFINE_float("init_scale", 0.05, "Initialization scale.")
 flags.DEFINE_float("learning_rate", 0.1, "Learning rate")
 flags.DEFINE_float("max_grad_norm", 5.0, "Clip gradients to this norm")
 flags.DEFINE_float("lr_decay", 0.5, "Learning rate decay. Default is 0.5 which halves the learning rate.")
 
+# n-gram identifier cache options
 flags.DEFINE_float("file_cache_weight", 0.2, "Weight of the file cache.")
 flags.DEFINE_integer("cache_order", 6, "n-gram order for the identifier cache")
 
 flags.DEFINE_integer("thresh", 0, "Threshold for vocabulary inclusion.")
 flags.DEFINE_boolean("unk", True, "use -UNK- token to model OOV.")
-flags.DEFINE_boolean("gru", False, "Use a GRU cell. Must be set to True to use a GRU, otherwise an LSTM will be used.")
 flags.DEFINE_boolean("bidirectional", False, "Bidirectional model.")
 flags.DEFINE_boolean("word_level_perplexity", False, "Convert to word level perplexity.")
 flags.DEFINE_boolean("cross_entropy", False, "Print cross-entropy for validation/test instead of perplexity.")
@@ -111,7 +117,7 @@ class NLM(object):
     self.num_steps = num_steps = config.num_steps
     self.hidden_size = hidden_size = config.hidden_size
     self.vocab_size = vocab_size = config.vocab_size
-    self.predictions_file = config.output_probs_file
+    #self.predictions_file = config.output_probs_file
     self.global_step = tf.Variable(0, trainable=False)
 
     with tf.name_scope("Parameters"):
@@ -157,6 +163,7 @@ class NLM(object):
                                                         initial_state=self.reset_state)
 
     with tf.name_scope("Cost"):
+      # Output and loss function calculation
       self.output = tf.reshape(tf.concat(axis=0, values=self.outputs), [-1, hidden_size])
       self.softmax_w = tf.get_variable("softmax_w", [hidden_size, vocab_size], dtype=data_type())
       self.softmax_b = tf.get_variable("softmax_b", [vocab_size], dtype=data_type())
@@ -966,12 +973,6 @@ class NLM(object):
     CACHE_WEIGHT = FLAGS.file_cache_weight
     PROJECT_CACHE_WEIGHT = FLAGS.file_cache_weight * 0.5
     SKIP_CACHE_PROB_THRESHOLD = 0.0
-    # if cache_ids and FLAGS.BPE is not None:
-    #   bpe_codes_fin = FLAGS.BPE
-    #   bpe = BPE(bpe_codes_fin, merges=-1, separator='@@')
-    # else:
-    #   bpe = None
-    # assert(FLAGS.token_model or bpe is not None)
 
     raw_data = test_dataset.data  # is just one long array
     data_len = len(raw_data)
@@ -2078,7 +2079,7 @@ def create_model(session, config):
 class Config(object):
   """Configuration"""
 
-  def __init__(self, inits, lr, mgrad, nlayers, nsteps, hsize, mepoch, kp, decay, bsize, tbsize, vsize, probs_file):
+  def __init__(self, inits, lr, mgrad, nlayers, nsteps, hsize, mepoch, kp, decay, bsize, tbsize, vsize):
     self.init_scale = inits
     self.learning_rate = lr
     self.max_grad_norm = mgrad
@@ -2091,7 +2092,6 @@ class Config(object):
     self.batch_size = bsize
     self.test_batch_size = tbsize
     self.vocab_size = vsize
-    self.output_probs_file = probs_file
 
 
 
@@ -2104,7 +2104,7 @@ def main(_):
 
     config = Config(FLAGS.init_scale, FLAGS.learning_rate, FLAGS.max_grad_norm, FLAGS.num_layers, FLAGS.num_steps,
                     FLAGS.hidden_size, FLAGS.max_epoch, FLAGS.keep_prob, FLAGS.lr_decay, FLAGS.batch_size,
-                    FLAGS.test_batch_size, FLAGS.vocab_size, FLAGS.output_probs_file)
+                    FLAGS.test_batch_size, FLAGS.vocab_size)
 
     exit_criteria = ExitCriteria(config.max_epoch)
 
@@ -2194,8 +2194,8 @@ def main(_):
       start_time = time.time()
       test_wids = reader._file_to_word_ids(FLAGS.data_path + "/" + FLAGS.test_filename, train_vocab)
       test_dataset = reader.dataset(test_wids, train_vocab, train_vocab_rev)
-      test_proj_file = FLAGS.data_path + '/' + FLAGS.test_proj_filename
       if FLAGS.dynamic:
+        test_proj_file = FLAGS.data_path + '/' + FLAGS.test_proj_filename
         with open(test_proj_file, 'r') as f:
           test_proj_lines = [line for line in f]
       else:
