@@ -11,6 +11,15 @@ Contains the code for our ICSE 2020 submission: open vocabulary language model f
 
 **code_nlm.py** contains the implementation of our NLM for code and supports training, perplexity/cross-entropy calculation, code-completion simulation as well as dynamic versions of the test scenarios. The updated implementation has also some new features, previously not present in the code. That is measuring identifier specific performance for code completion. Another new feature implements a simple n-gram cache for identifiers that better simulates use of the model in an IDE where such information would be present. In order to use the identifier features a file containing identifier information must be provided through the options. 
 
+# Installation
+
+Python==3.6 is required!
+
+```shell script
+git clone https://github.com/mast-group/OpenVocabCodeNLM
+cd OpenVocabCodeNLM
+pip3 install -r requirements.txt
+```
 
 # Usage Instructions
 If you want to try the implementation unzip the directory containing the sample data.
