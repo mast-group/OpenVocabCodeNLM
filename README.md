@@ -78,7 +78,7 @@ python code_nlm.py --data_path $DATA_HOME --train_dir $MODEL_DIR --train_filenam
 ### Test Entropy Calculation
 ```
 # Testing the model (Calculating test set entropy) 
-python code_nlm.py --test True --data_path $DATA_HOME --train_filename $TRAIN_FILE --test_filename $TEST_FILE --gru True --batch_size $BATCH_SIZE --word_level_perplexity True --cross_entropy True
+python code_nlm.py --test True --data_path $DATA_HOME --train_dir $MODEL_DIR --test_filename $TEST_FILE --gru True --batch_size $BATCH_SIZE --word_level_perplexity True --cross_entropy True
 ```
 
 #### Dynamically Adapt the Model on Test Data
