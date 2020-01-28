@@ -22,6 +22,9 @@ cd OpenVocabCodeNLM
 pip install -r requirements.txt #python2
 pip3 install -r requirements.txt #python3
 ```
+The experiments in the paper were performed using Python 2.7.14 but we have currently not experienced any unresolved issue with Python 3. </br>
+In case you encounter any issues please open a new issue entry.
+
 
 # Usage Instructions
 If you want to try the implementation unzip the directory containing the sample data.
