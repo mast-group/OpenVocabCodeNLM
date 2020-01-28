@@ -13,12 +13,14 @@ Contains the code for our ICSE 2020 submission: open vocabulary language model f
 
 # Installation
 
-Python==3.6 is required!
+Python>2.7.6 or Python==3.6 is required!
+Python>3.6 is not supported due to the tensorflow version not supporting it.
 
 ```shell script
 git clone https://github.com/mast-group/OpenVocabCodeNLM
 cd OpenVocabCodeNLM
-pip3 install -r requirements.txt
+pip install -r requirements #python2
+pip3 install -r requirements.txt #python3
 ```
 
 # Usage Instructions
