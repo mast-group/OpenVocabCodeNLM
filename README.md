@@ -19,7 +19,7 @@ Python>3.6 is not supported due to the tensorflow version not supporting it.
 ```shell script
 git clone https://github.com/mast-group/OpenVocabCodeNLM
 cd OpenVocabCodeNLM
-pip install -r requirements #python2
+pip install -r requirements.txt #python2
 pip3 install -r requirements.txt #python3
 ```
 
