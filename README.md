@@ -50,7 +50,7 @@ LR=0.1 # This is the default value. You can skip it if you don't want to change 
 # Training batch size
 BATCH_SIZE=32 # This is also the default.
 # RNN unroll timesteps for gradient calculation.
-STEPS=200 # This also the default.
+STEPS=20 # 20-50 is a good range of values for dynamic experiments.
 # 1 - Dropout probability
 KEEP_PROB=0.5 # This is also the default.
 # RNN hidden state size
@@ -98,7 +98,7 @@ This is achieved via the *test_proj_filename* option.
 ```
 # Batch size must always be set to 1 for this scenario! We are going through every file seperately.
 # In an IDE this could instead be sped up through some engineering.
-python code_nlm.py --dynamic_test True --data_path $DATA_HOME --train_dir $MODEL_DIR --test_filename $TEST_FILE --gru True --batch_size 1 --word_level_perplexity True --cross_entropy True --test_proj_filename $TEST_PROJ_NAMES_FILE
+python code_nlm.py --dynamic_test True --data_path $DATA_HOME --train_dir $MODEL_DIR --test_filename $TEST_FILE --gru True --batch_size 1 --word_level_perplexity True --cross_entropy True --test_proj_filename $TEST_PROJ_NAMES_FILE --num_steps $STEPS
 ```
 
 ### Test Code Completion
@@ -110,7 +110,7 @@ python code_nlm.py --completion True --data_path $DATA_HOME --train_dir $MODEL_D
 #### Dynamic Code Completion on Test Data
 Similarly to before we need to set the *test_proj_filename* option.
 ```
-python code_nlm.py --completion True --dynamic True --data_path $DATA_HOME --train_dir $MODEL_DIR --test_filename $TEST_FILE --gru True --batch_size $BATCH_SIZE  --test_proj_filename $TEST_PROJ_NAMES_FILE
+python code_nlm.py --completion True --dynamic True --data_path $DATA_HOME --train_dir $MODEL_DIR --test_filename $TEST_FILE --gru True --batch_size $BATCH_SIZE  --test_proj_filename $TEST_PROJ_NAMES_FILE --num_steps $STEPS
 ```
 
 #### Dynamic Code Completion on Test Data and Measuring Identifier Specific Performance
@@ -118,7 +118,7 @@ To run this experiment you need to provide a file containing a mapping that lets
 This information would easily be present in an IDE.
 The mapping is provided via the *identifier_map* option.
 ```
-python code_nlm.py --completion True --dynamic True --data_path $DATA_HOME --train_dir $MODEL_DIR --test_filename $TEST_FILE --gru True --batch_size $BATCH_SIZE  --test_proj_filename $TEST_PROJ_NAMES_FILE --identifier_map $ID_MAP_FILE
+python code_nlm.py --completion True --dynamic True --data_path $DATA_HOME --train_dir $MODEL_DIR --test_filename $TEST_FILE --gru True --batch_size $BATCH_SIZE  --test_proj_filename $TEST_PROJ_NAMES_FILE --identifier_map $ID_MAP_FILE --num_steps $STEPS
 ```
 
 #### Adding a Simple Identifier n-gram Cache
@@ -126,7 +126,7 @@ In an IDE setting we could improve the performance on identifiers by utilizing  
 The *file_cache_weight* and  *cache_order* options can be used to control the cache's weight and the cache's order respectively.
 By default we use a 6-gram with a weight of 0.2.
 ```
-python code_nlm.py --completion True --dynamic True --data_path $DATA_HOME --train_dir $MODEL_DIR --test_filename $TEST_FILE --gru True --batch_size $BATCH_SIZE --test_proj_filename $TEST_PROJ_NAMES_FILE --identifier_map $ID_MAP_FILE --cache_ids True
+python code_nlm.py --completion True --dynamic True --data_path $DATA_HOME --train_dir $MODEL_DIR --test_filename $TEST_FILE --gru True --batch_size $BATCH_SIZE --test_proj_filename $TEST_PROJ_NAMES_FILE --identifier_map $ID_MAP_FILE --cache_ids True --num_steps $STEPS
 ```
 
 ### Predictability
