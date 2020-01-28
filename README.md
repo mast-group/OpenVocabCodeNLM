@@ -132,3 +132,21 @@ python code_nlm.py --completion True --dynamic True --data_path $DATA_HOME --tra
 ### Predictability
 Similar to testing but calculates the average entropy of the files instead of the per token one.
 
+
+
+# Preprocessing
+
+## BPE
+The BPE implementation used can be found here: https://github.com/rsennrich/subword-nmt 
+
+To apply byte pair encoding to word segmentation, invoke these commands:
+```
+subword-nmt learn-bpe -s {num_operations} < {train_file} > {codes_file}
+subword-nmt apply-bpe -c {codes_file} < {test_file} > {out_file}
+```
+num_operations = The number of BPE ops e.g., 10000
+train_file = The file on which to learn the encoding
+codes_file = The file in which to output the learned encoding
+test_file = The file to segment with the learned encoding
+out_file = The file in which to save the now segmented test_file
+
