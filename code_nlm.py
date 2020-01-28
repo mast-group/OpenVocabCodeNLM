@@ -2310,6 +2310,22 @@ class Candidate(object):
 
   def get_subtoken_history(self):
     return tuple(self._subtoken_history)
+  
+  def __eq__(self, other):
+    return self.token_text == other.token_text
+  
+  def __lt__(self, other):
+    return self.token_text < other.token_text
+
+  def __gt__(self, other):
+    return self.token_text > other.token_text
+
+  def __le__(self, other):
+    return self.token_text <= other.token_text
+
+  def __ge__(self, other):
+    return self.token_text >= other.token_text
+
 
 if __name__=="__main__":
     tf.app.run()
