@@ -7,7 +7,7 @@ author = {Karampatsis, Rafael - Michael and Babii, Hlib and Robbes, Romain and S
 title = {{Big Code != Big Vocabulary: Open-Vocabulary Models for Source code}},\
 year = {2020},\
 publisher = {ACM},\
-url = {https://doi.org/10.1145/3377811.3380342},\
+url = {https://doi.org/10.1145/3377811.3380342}, \
 doi = {10.1145/3377811.3380342},\
 booktitle = {Proceedings of the 42nd International Conference on Software Engineering},\
 pages = {},\
