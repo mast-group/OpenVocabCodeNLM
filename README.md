@@ -1,6 +1,21 @@
 # OpenVocabNLMs
 Contains the code for our ICSE 2020 submission: open vocabulary language model for source code that uses the byte pair encoding algorithm to learn a segmentation of code tokens into subtokens. 
 
+If you use our code/implementation, datasets or pre-trained models please cite our paper:
+@inproceedings{Karampatsis2020ICSE,
+author = {Karampatsis, Rafael - Michael and Babii, Hlib and Robbes, Romain and Sutton, Charles and Janes, Andrea},
+title = {{Big Code != Big Vocabulary: Open-Vocabulary Models for Source code}},
+year = {2020},
+publisher = {ACM},
+url = {https://doi.org/10.1145/3377811.3380342},
+doi = {10.1145/3377811.3380342},
+booktitle = {Proceedings of the 42nd International Conference on Software Engineering},
+pages = {},
+numpages = {11},
+location = {Seoul, South Korea},
+series = {ICSE ’20}
+}
+
 
 # Code Structure
 **non-ascii_sequences_to_unk.py** is a preprocessing script that can be used to remove non-ascii sequences from the data and replace them with a special symbol.
