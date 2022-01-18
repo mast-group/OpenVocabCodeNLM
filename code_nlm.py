@@ -24,6 +24,7 @@ from operator import itemgetter
 
 import numpy as np
 import tensorflow as tf
+import tensorflow_addons as tfa
 import reader
 
 # BPE imports
@@ -32,7 +33,7 @@ import reader
 
 
 
-flags = tf.flags
+flags = tf.compat.v1.flags
 # Path options 
 flags.DEFINE_string("data_path", None, "Path to folder containing training/test data.")
 flags.DEFINE_string("train_dir", None, "Output directory for saving the model.")
@@ -54,7 +55,7 @@ flags.DEFINE_string("test_proj_filename", None, "The file that contains the test
 flags.DEFINE_string("identifier_map", None, "The file that contains information about which tokens are identifiers.")
 flags.DEFINE_boolean("cache_ids", False, "Set to True to cache project identifiers during completion.")
 # flags.DEFINE_string("BPE", None, "The file containing the BPE encoding.")
-flags.DEFINE_string("subtoken_map", None, "Contains the mapping from heyristic subtokens to tokens.")
+flags.DEFINE_string("subtoken_map", None, "Contains the mapping from heuristic subtokens to tokens.")
 
 # flags.DEFINE_string("output_probs_file", "predictionProbabilities.txt", "The file to store output probabilities.")
 
@@ -99,7 +100,7 @@ def data_type():
   return tf.float32
 
 def get_gpu_config():
-  gconfig = tf.ConfigProto()
+  gconfig = tf.compat.v1.ConfigProto()
   gconfig.gpu_options.per_process_gpu_memory_fraction = 0.975 # Don't take 100% of the memory
   gconfig.allow_soft_placement = True # Does not aggressively take all the GPU memory
   gconfig.gpu_options.allow_growth = True # Take more memory when necessary
@@ -120,79 +121,109 @@ class NLM(object):
     #self.predictions_file = config.output_probs_file
     self.global_step = tf.Variable(0, trainable=False)
 
-    with tf.name_scope("Parameters"):
+    with tf.compat.v1.name_scope("Parameters"):
       # Sets dropout and learning rate.
-      self.learning_rate = tf.placeholder(tf.float32, name="learning_rate")
-      self.keep_probability = tf.placeholder(tf.float32, name="keep_probability")
+      self.learning_rate = tf.compat.v1.placeholder(tf.float32, name="learning_rate")
+      self.keep_probability = tf.compat.v1.placeholder(tf.float32, name="keep_probability")
 
-    with tf.name_scope("Input"):
-      self.inputd = tf.placeholder(tf.int64, shape=(batch_size, None), name="inputd")
-      self.targets = tf.placeholder(tf.int64, shape=(batch_size, None), name="targets")
-      self.target_weights = tf.placeholder(tf.float32, shape=(batch_size, None), name="tgtweights")
+    with tf.compat.v1.name_scope("Input"):
+      self.inputd = tf.compat.v1.placeholder(tf.int64, shape=(batch_size, None), name="inputd")
+      self.targets = tf.compat.v1.placeholder(tf.int64, shape=(batch_size, None), name="targets")
+      self.target_weights = tf.compat.v1.placeholder(tf.float32, shape=(batch_size, None), name="tgtweights")
 
     with tf.device("/cpu:0"):
-      with tf.name_scope("Embedding"):
+      with tf.compat.v1.name_scope("Embedding"):
         # Initialize embeddings on the CPU and add dropout layer after embeddings.
-        self.embedding = tf.Variable(tf.random_uniform((vocab_size, hidden_size), -config.init_scale, config.init_scale), dtype=data_type(), name="embedding")
-        self.embedded_inputds = tf.nn.embedding_lookup(self.embedding, self.inputd, name="embedded_inputds")
-        self.embedded_inputds = tf.nn.dropout(self.embedded_inputds, self.keep_probability)
+        self.embedding = tf.Variable(tf.random.uniform((vocab_size, hidden_size), -config.init_scale, config.init_scale), dtype=data_type(), name="embedding")
+        self.embedded_inputds = tf.nn.embedding_lookup(params=self.embedding, ids=self.inputd, name="embedded_inputds")
+        self.embedded_inputds = tf.nn.dropout(self.embedded_inputds, rate=1 - (self.keep_probability))
 
-    with tf.name_scope("RNN"):
+    with tf.compat.v1.name_scope("RNN"):
       # Definitions for the different cells that can be used. Either lstm or GRU which will be wrapped with dropout.
       def lstm_cell():
-        if 'reuse' in inspect.getargspec(tf.contrib.rnn.BasicLSTMCell.__init__).args:
-          return tf.contrib.rnn.BasicLSTMCell(hidden_size, forget_bias=0.0, state_is_tuple=True, reuse=tf.get_variable_scope().reuse)
+        if 'reuse' in inspect.getargspec(tf.compat.v1.nn.rnn_cell.BasicLSTMCell.__init__).args:
+          return tf.compat.v1.nn.rnn_cell.BasicLSTMCell(hidden_size, forget_bias=0.0, state_is_tuple=True, reuse=tf.compat.v1.get_variable_scope().reuse)
         else:
-          return tf.contrib.rnn.BasicLSTMCell(hidden_size, forget_bias=0.0, state_is_tuple=True)
+          return tf.compat.v1.nn.rnn_cell.BasicLSTMCell(hidden_size, forget_bias=0.0, state_is_tuple=True)
       def gru_cell():
-        if 'reuse' in inspect.getargspec(tf.contrib.rnn.GRUCell.__init__).args:
-          return tf.contrib.rnn.GRUCell(hidden_size, reuse=tf.get_variable_scope().reuse)
+        if 'reuse' in inspect.getargspec(tf.compat.v1.nn.rnn_cell.GRUCell.__init__).args:
+          return tf.compat.v1.nn.rnn_cell.GRUCell(hidden_size, reuse=tf.compat.v1.get_variable_scope().reuse)
         else:
-          return tf.contrib.rnn.GRUCell(hidden_size)
+          return tf.compat.v1.nn.rnn_cell.GRUCell(hidden_size)
       def drop_cell():
         if FLAGS.gru:
-          return tf.contrib.rnn.DropoutWrapper(gru_cell(), output_keep_prob=self.keep_probability)
+          return tf.compat.v1.nn.rnn_cell.DropoutWrapper(gru_cell(), output_keep_prob=self.keep_probability)
+          #return tf.contrib.rnn.DropoutWrapper(gru_cell(), output_keep_prob=self.keep_probability)
         else:
-          return tf.contrib.rnn.DropoutWrapper(lstm_cell(), output_keep_prob=self.keep_probability)
+          return tf.compat.v1.nn.rnn_cell.DropoutWrapper(lstm_cell(), output_keep_prob=self.keep_probability)
+          #return tf.contrib.rnn.DropoutWrapper(lstm_cell(), output_keep_prob=self.keep_probability)
 
       # Allows multiple layers to be used. Not advised though.
-      rnn_layers = tf.contrib.rnn.MultiRNNCell([drop_cell() for _ in range(self.num_layers)], state_is_tuple=True)
+      rnn_layers = tf.compat.v1.nn.rnn_cell.MultiRNNCell([drop_cell() for _ in range(self.num_layers)], state_is_tuple=True)
       # Initialize the state to zero.
       self.reset_state = rnn_layers.zero_state(batch_size, data_type())
-      self.outputs, self.next_state = tf.nn.dynamic_rnn(rnn_layers, self.embedded_inputds, time_major=False,
+      self.outputs, self.next_state = tf.compat.v1.nn.dynamic_rnn(rnn_layers, self.embedded_inputds, time_major=False,
                                                         initial_state=self.reset_state)
 
-    with tf.name_scope("Cost"):
+    with tf.compat.v1.name_scope("Cost"):
       # Output and loss function calculation
       self.output = tf.reshape(tf.concat(axis=0, values=self.outputs), [-1, hidden_size])
-      self.softmax_w = tf.get_variable("softmax_w", [hidden_size, vocab_size], dtype=data_type())
-      self.softmax_b = tf.get_variable("softmax_b", [vocab_size], dtype=data_type())
+      self.softmax_w = tf.compat.v1.get_variable("softmax_w", [hidden_size, vocab_size], dtype=data_type())
+      self.softmax_b = tf.compat.v1.get_variable("softmax_b", [vocab_size], dtype=data_type())
       self.logits = tf.matmul(self.output, self.softmax_w) + self.softmax_b
-      self.loss = tf.contrib.legacy_seq2seq.sequence_loss_by_example(
-        [self.logits], [tf.reshape(self.targets, [-1])], [tf.reshape(self.target_weights, [-1])])
-      self.cost = tf.div(tf.reduce_sum(self.loss), batch_size, name="cost")
+
+      # See here : https://www.tensorflow.org/addons/api_docs/python/tfa/seq2seq/sequence_loss
+      # Old Interface: https://docs.w3cub.com/tensorflow~python/tf/contrib/legacy_seq2seq/sequence_loss_by_example
+      print("=========== DEBUGGING IN PROCESS ===============")
+      print("Hidden Size: ", hidden_size)
+      print("Vocab Size: ", vocab_size)
+      print("Output: ", self.output)
+      print("Softmax_weights: ", self.softmax_w)
+      print("logits: ",self.logits)
+      print("targets: ", self.targets)
+      print("target_weights: ", self.target_weights)
+
+      print("Reshaping...")
+      big_shape = [self.batch_size,self.num_steps,self.vocab_size]
+      #small_shape = [self.batch_size,self.logits.shape[1]]
+      small_shape = [self.batch_size,self.num_steps]
+
+      print("logits2: ", tf.reshape([tf.reshape(self.logits,[-1])],big_shape))
+      print("targets2: ", tf.reshape([tf.reshape(self.targets, [-1])],[self.batch_size,self.targets.shape[0]]))
+      print("target_weights2: ",tf.reshape([tf.reshape(self.target_weights, [-1])],[self.batch_size,self.targets.shape[0]]))
+      print("=========== =============== ===============")
+
+      self.loss = tfa.seq2seq.loss.sequence_loss(
+        logits  = tf.reshape([tf.reshape(self.logits,[-1])],big_shape),
+        targets = tf.reshape([tf.reshape(self.targets, [-1])],small_shape),
+        weights = tf.reshape([tf.reshape(self.target_weights, [-1])],small_shape)
+      )
+      #self.loss = tf.contrib.legacy_seq2seq.sequence_loss_by_example(
+      #  [self.logits], [tf.reshape(self.targets, [-1])], [tf.reshape(self.target_weights, [-1])])
+
+      self.cost = tf.compat.v1.div(tf.reduce_sum(input_tensor=self.loss), batch_size, name="cost")
       self.final_state = self.next_state
 
       self.norm_logits = tf.nn.softmax(self.logits)
 
-    with tf.name_scope("Train"):
+    with tf.compat.v1.name_scope("Train"):
       self.iteration = tf.Variable(0, dtype=data_type(), name="iteration", trainable=False)
-      tvars = tf.trainable_variables()
-      self.gradients, _ = tf.clip_by_global_norm(tf.gradients(self.cost, tvars),
+      tvars = tf.compat.v1.trainable_variables()
+      self.gradients, _ = tf.clip_by_global_norm(tf.gradients(ys=self.cost, xs=tvars),
                                                  config.max_grad_norm, name="clip_gradients")
-      optimizer = tf.train.GradientDescentOptimizer(self.learning_rate)
+      optimizer = tf.compat.v1.train.GradientDescentOptimizer(self.learning_rate)
       self.train_step = optimizer.apply_gradients(zip(self.gradients, tvars), name="train_step",
                                                   global_step=self.global_step)
       self.validation_perplexity = tf.Variable(dtype=data_type(), initial_value=float("inf"),
                                                trainable=False, name="validation_perplexity")
-      tf.summary.scalar(self.validation_perplexity.op.name, self.validation_perplexity)
+      tf.compat.v1.summary.scalar(self.validation_perplexity.op.name, self.validation_perplexity)
       self.training_epoch_perplexity = tf.Variable(dtype=data_type(), initial_value=float("inf"),
                                                    trainable=False, name="training_epoch_perplexity")
-      tf.summary.scalar(self.training_epoch_perplexity.op.name, self.training_epoch_perplexity)
+      tf.compat.v1.summary.scalar(self.training_epoch_perplexity.op.name, self.training_epoch_perplexity)
 
-      self.saver = tf.train.Saver(tf.global_variables(), max_to_keep=None)
-      self.initialize = tf.initialize_all_variables()
-      self.summary = tf.summary.merge_all()
+      self.saver = tf.compat.v1.train.Saver(tf.compat.v1.global_variables(), max_to_keep=None)
+      self.initialize = tf.compat.v1.initialize_all_variables()
+      self.summary = tf.compat.v1.summary.merge_all()
 
 
   def get_parameter_count(self, debug=False):
@@ -201,13 +232,13 @@ class NLM(object):
     :param debug: Whether debugging information should be printed.
     :return: Returns the number of parameters required for the model.
     """
-    params = tf.trainable_variables()
+    params = tf.compat.v1.trainable_variables()
     total_parameters = 0
     for variable in params:
       shape = variable.get_shape()
       variable_parameters = 1
       for dim in shape:
-        variable_parameters *= dim.value
+        variable_parameters *= dim
       if debug:
           print(variable)
           print(shape + "\t" + str(len(shape)) + "\t" + str(variable_parameters))
@@ -262,7 +293,7 @@ class NLM(object):
     :param valid_data: The dataset instance to use for validation.
     :param summary_dir: Directory in which summary information will be stored.
     """
-    summary_writer = tf.summary.FileWriter(summary_dir, session.graph)
+    summary_writer = tf.compat.v1.summary.FileWriter(summary_dir, session.graph)
     previous_valid_log_ppx = []
     nglobal_steps = 0
     epoch = 1
@@ -314,8 +345,8 @@ class NLM(object):
         checkpoint_path = os.path.join(FLAGS.train_dir, "lm.ckpt.epoch" + str(epoch))
         self.saver.save(session, checkpoint_path, global_step=self.global_step)
 
-        train_perplexity_summary = tf.Summary()
-        valid_perplexity_summary = tf.Summary()
+        train_perplexity_summary = tf.compat.v1.Summary()
+        valid_perplexity_summary = tf.compat.v1.Summary()
 
         train_perplexity_summary.value.add(tag="train_log_ppx", simple_value=train_log_perplexity)
         train_perplexity_summary.value.add(tag="train_ppx", simple_value=train_perplexity)
@@ -436,7 +467,7 @@ class NLM(object):
       if test_project != last_test_project and last_test_project is not None:
         # New test project so restore the model back to the global one.
         ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
-        if ckpt and tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
+        if ckpt and tf.compat.v1.train.checkpoint_exists(ckpt.model_checkpoint_path):
           self.saver.restore(session, ckpt.model_checkpoint_path)
       last_test_project = test_project
 
@@ -535,7 +566,7 @@ class NLM(object):
       if test_project != last_test_project and last_test_project is not None:
         # New test project so restore the model
         ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
-        if ckpt and tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
+        if ckpt and tf.compat.v1.train.checkpoint_exists(ckpt.model_checkpoint_path):
           self.saver.restore(session, ckpt.model_checkpoint_path)
       last_test_project = test_project
 
@@ -639,7 +670,7 @@ class NLM(object):
     """
     # If checkpoint does not exist throw an exception. A global model must have been pretrained.
     ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
-    if not tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
+    if not tf.compat.v1.train.checkpoint_exists(ckpt.model_checkpoint_path):
       raise Exception('Checkpoint does not exist!')
 
     # Some initializations.
@@ -692,7 +723,7 @@ class NLM(object):
               partition_words.extend([word for word in line.split(' ')])
           # If checkpoint does not exist throw an exception. A global model should have been trained...
           ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
-          if not tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
+          if not tf.compat.v1.train.checkpoint_exists(ckpt.model_checkpoint_path):
             raise Exception('Checkpoint for global model does not exist!')
           self.saver.restore(session, ckpt.model_checkpoint_path)
 
@@ -741,7 +772,7 @@ class NLM(object):
         ctr += 1
         # Restore the global model
         ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
-        if ckpt and tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
+        if ckpt and tf.compat.v1.train.checkpoint_exists(ckpt.model_checkpoint_path):
           self.saver.restore(session, ckpt.model_checkpoint_path)
 
         if large_project:
@@ -1007,7 +1038,7 @@ class NLM(object):
         if test_project != last_test_project:
           # New test project so restore the model
           ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
-          if ckpt and tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
+          if ckpt and tf.compat.v1.train.checkpoint_exists(ckpt.model_checkpoint_path):
             self.saver.restore(session, ckpt.model_checkpoint_path)
           
           # Reset the project's cache of identifiers if one is used.
@@ -1606,7 +1637,7 @@ class NLM(object):
     """
     # If checkpoint does not exist throw an exception
     ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
-    if not tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
+    if not tf.compat.v1.train.checkpoint_exists(ckpt.model_checkpoint_path):
       raise Exception('Checkpoint does not exist!')
 
     new_learning_rate = config.learning_rate
@@ -1658,7 +1689,7 @@ class NLM(object):
               partition_words.extend([word for word in line.split(' ')])
           # If checkpoint does not exist throw an exception
           ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
-          if not tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
+          if not tf.compat.v1.train.checkpoint_exists(ckpt.model_checkpoint_path):
             raise Exception('Checkpoint does not exist!')
           self.saver.restore(session, ckpt.model_checkpoint_path)
 
@@ -1709,7 +1740,7 @@ class NLM(object):
 
         # Restore the global model
         ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
-        if ckpt and tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
+        if ckpt and tf.compat.v1.train.checkpoint_exists(ckpt.model_checkpoint_path):
           self.saver.restore(session, ckpt.model_checkpoint_path)
 
         if large_project:
@@ -2051,7 +2082,7 @@ def do_test(test_path, train_vocab, train_vocab_rev, config):
   test_wids = reader._file_to_word_ids(test_path, train_vocab)
   test_dataset = reader.dataset(test_wids, train_vocab, train_vocab_rev)
   with tf.Graph().as_default():
-    with tf.Session(config=get_gpu_config()) as session:
+    with tf.compat.v1.Session(config=get_gpu_config()) as session:
       model = create_model(session, config)
       model.train_vocab = train_vocab
       test_perplexity = model.test(session, config, test_dataset)
@@ -2066,12 +2097,12 @@ def create_model(session, config):
   """
   model = NLM(config)
   ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
-  if ckpt and tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
+  if ckpt and tf.compat.v1.train.checkpoint_exists(ckpt.model_checkpoint_path):
     print("Reading model parameters from %s" % ckpt.model_checkpoint_path)
     model.saver.restore(session, ckpt.model_checkpoint_path)
   else:
     print("Created model with fresh parameters:")
-    session.run(tf.global_variables_initializer())
+    session.run(tf.compat.v1.global_variables_initializer())
   print("*Number of parameters* = " + str(model.get_parameter_count()))
   return model
 
@@ -2121,7 +2152,7 @@ def main(_):
         test_lines = [line for line in f]
       # test_lines = ['class Car { public static void main ( String [ ] args) }\n']
       with tf.Graph().as_default():
-        with tf.Session(config=get_gpu_config()) as session:
+        with tf.compat.v1.Session(config=get_gpu_config()) as session:
           model = create_model(session, config)
           model.train_vocab = train_vocab
           model.train_vocab_rev = train_vocab_rev
@@ -2145,7 +2176,7 @@ def main(_):
         test_proj_lines = [line for line in f]
       # test_lines = ['class Car { public static void main ( String [ ] args) }\n']
       with tf.Graph().as_default():
-        with tf.Session(config=get_gpu_config()) as session:
+        with tf.compat.v1.Session(config=get_gpu_config()) as session:
           model = create_model(session, config)
           model.train_vocab = train_vocab
           model.train_vocab_rev = train_vocab_rev
@@ -2170,7 +2201,7 @@ def main(_):
         test_proj_lines = [line.rstrip('\n') for line in f]
       # test_lines = ['class Car { public static void main ( String [ ] args) }\n']
       with tf.Graph().as_default():
-        with tf.Session(config=get_gpu_config()) as session:
+        with tf.compat.v1.Session(config=get_gpu_config()) as session:
           model = create_model(session, config)
           perplexity = model.maintenance_test(session, config, test_lines, test_proj_lines, train_vocab, train_vocab_rev)
           print('Average perplexity:', perplexity)
@@ -2201,7 +2232,7 @@ def main(_):
       else:
         test_proj_lines = []
       with tf.Graph().as_default():
-        with tf.Session(config=get_gpu_config()) as session:
+        with tf.compat.v1.Session(config=get_gpu_config()) as session:
           model = create_model(session, config)
           model.train_vocab = train_vocab
           model.train_vocab_rev = train_vocab_rev
@@ -2240,7 +2271,7 @@ def main(_):
         test_proj_lines = [line.rstrip('\n') for line in f]
 
       with tf.Graph().as_default():
-        with tf.Session(config=get_gpu_config()) as session:
+        with tf.compat.v1.Session(config=get_gpu_config()) as session:
           model = create_model(session, config)
           mrr = model.maintenance_completion(session, config, test_lines, test_proj_lines, train_vocab,
                                        train_vocab_rev, config.batch_size)
@@ -2265,7 +2296,7 @@ def main(_):
 
       start_time = time.time()
       with tf.Graph().as_default():
-        with tf.Session(config=get_gpu_config()) as session:
+        with tf.compat.v1.Session(config=get_gpu_config()) as session:
           md = create_model(session, config)
           md.train_vocab = train_vocab
           md.train_vocab_rev = train_vocab_rev
@@ -2328,4 +2359,4 @@ class Candidate(object):
 
 
 if __name__=="__main__":
-    tf.app.run()
+    tf.compat.v1.app.run()
