@@ -188,15 +188,16 @@ class NLM(object):
       #small_shape = [self.batch_size,self.logits.shape[1]]
       small_shape = [self.batch_size,self.num_steps]
 
-      print("logits2: ", tf.reshape([tf.reshape(self.logits,[-1])],big_shape))
-      print("targets2: ", tf.reshape([tf.reshape(self.targets, [-1])],[self.batch_size,self.targets.shape[0]]))
-      print("target_weights2: ",tf.reshape([tf.reshape(self.target_weights, [-1])],[self.batch_size,self.targets.shape[0]]))
+      print("logits reshaped: ", tf.reshape(self.logits,big_shape))
+      print("targets reshaped: ", tf.reshape(self.targets,small_shape))
+      print("target_weights reshaped: ",tf.reshape(self.target_weights,small_shape))
+
       print("=========== =============== ===============")
 
       self.loss = tfa.seq2seq.loss.sequence_loss(
-        logits  = tf.reshape([tf.reshape(self.logits,[-1])],big_shape),
-        targets = tf.reshape([tf.reshape(self.targets, [-1])],small_shape),
-        weights = tf.reshape([tf.reshape(self.target_weights, [-1])],small_shape)
+        logits  = tf.reshape(self.logits,big_shape),
+        targets = tf.reshape(self.targets,small_shape),
+        weights = tf.reshape(self.target_weights,small_shape)
       )
       #self.loss = tf.contrib.legacy_seq2seq.sequence_loss_by_example(
       #  [self.logits], [tf.reshape(self.targets, [-1])], [tf.reshape(self.target_weights, [-1])])
