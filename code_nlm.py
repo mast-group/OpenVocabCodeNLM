@@ -127,9 +127,16 @@ class NLM(object):
       self.keep_probability = tf.compat.v1.placeholder(tf.float32, name="keep_probability")
 
     with tf.compat.v1.name_scope("Input"):
+      print("========================= Input Debugging ====================")
+
+
       self.inputd = tf.compat.v1.placeholder(tf.int64, shape=(batch_size, None), name="inputd")
       self.targets = tf.compat.v1.placeholder(tf.int64, shape=(batch_size, None), name="targets")
       self.target_weights = tf.compat.v1.placeholder(tf.float32, shape=(batch_size, None), name="tgtweights")
+      print("Input inputd:", self.inputd)
+      print("Input Targets:", self.targets)
+      print("Input Target Weights:",self.target_weights)
+      print("=========== =============== ===============")
 
     with tf.device("/cpu:0"):
       with tf.compat.v1.name_scope("Embedding"):
@@ -184,13 +191,24 @@ class NLM(object):
       print("target_weights: ", self.target_weights)
 
       print("Reshaping...")
+
+
       big_shape = [self.batch_size,self.num_steps,self.vocab_size]
-      #small_shape = [self.batch_size,self.logits.shape[1]]
       small_shape = [self.batch_size,self.num_steps]
+      # This cost function is used for both test and validation tasks,
+      # The perplexity measure and the completion measure.
+      if FLAGS.completion:
+        big_shape = [self.batch_size, 1, self.vocab_size]
+        small_shape = [self.batch_size, 1]
 
       print("logits reshaped: ", tf.reshape(self.logits,big_shape))
       print("targets reshaped: ", tf.reshape(self.targets,small_shape))
       print("target_weights reshaped: ",tf.reshape(self.target_weights,small_shape))
+
+      print("target content:")
+      tf.print(self.target_weights)
+      print("target weight content:")
+      tf.print(self.target_weights)
 
       print("=========== =============== ===============")
 
@@ -202,7 +220,7 @@ class NLM(object):
       #self.loss = tf.contrib.legacy_seq2seq.sequence_loss_by_example(
       #  [self.logits], [tf.reshape(self.targets, [-1])], [tf.reshape(self.target_weights, [-1])])
 
-      self.cost = tf.compat.v1.div(tf.reduce_sum(input_tensor=self.loss), batch_size, name="cost")
+      self.cost = tf.math.divide(tf.reduce_sum(input_tensor=self.loss), batch_size, name="cost")
       self.final_state = self.next_state
 
       self.norm_logits = tf.nn.softmax(self.logits)
@@ -1350,10 +1368,14 @@ class NLM(object):
             for i, (c, h) in enumerate(self.reset_state):
               feed_dict[c] = new_state[i].c
               feed_dict[h] = new_state[i].h
+
+          print("============================ Completion Debugging ===================================")
           norm_logits, new_state = session.run([self.norm_logits, self.next_state], feed_dict)
+          print("norm logits:",norm_logits)
           for c_id in range(beam_size):
             _, candidate = to_expand[c_id]
             logits = norm_logits[c_id]
+            print("logits",logits)
             sorted = list(enumerate(logits))
             sorted.sort(key=itemgetter(1), reverse=True)
 
@@ -1389,6 +1411,7 @@ class NLM(object):
                                                                     new_prob, tuple(candidate.get_subtoken_history()) +
                                                                     (test_dataset.rev_vocab[id],))))
 
+          print("====================== Completion Debugging Closed ==========================")
         # Get top and count rank of correct answer
         # if verbose: print('Correct_token:', correct_token)
         if verbose: print('Correct_token:', correct_token.replace('@@', ''), correct_token)

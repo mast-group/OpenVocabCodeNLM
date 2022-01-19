@@ -13,10 +13,19 @@ See the [original repository](https://github.com/mast-group/OpenVocabCodeNLM)
 ## Environment
 
 - Windows 10
-- Cuda 11
-- Python 3.9
-- Tensorflow 2.7
+- Cuda 11.6
+- Python 3.9.9
+- Tensorflow 2.6
+
+I further had to manually (!) install a matching keras with pip:
+
+``` 
+pip install keras==2.6
+```
 
 ## Changes
 
 1. Ran [Tensorflow Migration Skript](https://blog.tensorflow.org/2019/02/upgrading-your-code-to-tensorflow-2-0.html)
+2. Adjusted the re-Shape for cost function, as a different format was required in tfa
+3. Adjusted the reshape for cost function for completion and perplexity separately
+4. Some prints (might be removed ...)
