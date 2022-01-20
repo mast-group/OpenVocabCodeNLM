@@ -127,16 +127,9 @@ class NLM(object):
       self.keep_probability = tf.compat.v1.placeholder(tf.float32, name="keep_probability")
 
     with tf.compat.v1.name_scope("Input"):
-      print("========================= Input Debugging ====================")
-
-
       self.inputd = tf.compat.v1.placeholder(tf.int64, shape=(batch_size, None), name="inputd")
       self.targets = tf.compat.v1.placeholder(tf.int64, shape=(batch_size, None), name="targets")
       self.target_weights = tf.compat.v1.placeholder(tf.float32, shape=(batch_size, None), name="tgtweights")
-      print("Input inputd:", self.inputd)
-      print("Input Targets:", self.targets)
-      print("Input Target Weights:",self.target_weights)
-      print("=========== =============== ===============")
 
     with tf.device("/cpu:0"):
       with tf.compat.v1.name_scope("Embedding"):
@@ -181,17 +174,6 @@ class NLM(object):
 
       # See here : https://www.tensorflow.org/addons/api_docs/python/tfa/seq2seq/sequence_loss
       # Old Interface: https://docs.w3cub.com/tensorflow~python/tf/contrib/legacy_seq2seq/sequence_loss_by_example
-      print("=========== DEBUGGING IN PROCESS ===============")
-      print("Hidden Size: ", hidden_size)
-      print("Vocab Size: ", vocab_size)
-      print("Output: ", self.output)
-      print("Softmax_weights: ", self.softmax_w)
-      print("logits: ",self.logits)
-      print("targets: ", self.targets)
-      print("target_weights: ", self.target_weights)
-
-      print("Reshaping...")
-
 
       big_shape = [self.batch_size,self.num_steps,self.vocab_size]
       small_shape = [self.batch_size,self.num_steps]
@@ -201,24 +183,11 @@ class NLM(object):
         big_shape = [self.batch_size, 1, self.vocab_size]
         small_shape = [self.batch_size, 1]
 
-      print("logits reshaped: ", tf.reshape(self.logits,big_shape))
-      print("targets reshaped: ", tf.reshape(self.targets,small_shape))
-      print("target_weights reshaped: ",tf.reshape(self.target_weights,small_shape))
-
-      print("target content:")
-      tf.print(self.target_weights)
-      print("target weight content:")
-      tf.print(self.target_weights)
-
-      print("=========== =============== ===============")
-
       self.loss = tfa.seq2seq.loss.sequence_loss(
         logits  = tf.reshape(self.logits,big_shape),
         targets = tf.reshape(self.targets,small_shape),
         weights = tf.reshape(self.target_weights,small_shape)
       )
-      #self.loss = tf.contrib.legacy_seq2seq.sequence_loss_by_example(
-      #  [self.logits], [tf.reshape(self.targets, [-1])], [tf.reshape(self.target_weights, [-1])])
 
       self.cost = tf.math.divide(tf.reduce_sum(input_tensor=self.loss), batch_size, name="cost")
       self.final_state = self.next_state
@@ -1369,13 +1338,10 @@ class NLM(object):
               feed_dict[c] = new_state[i].c
               feed_dict[h] = new_state[i].h
 
-          print("============================ Completion Debugging ===================================")
           norm_logits, new_state = session.run([self.norm_logits, self.next_state], feed_dict)
-          print("norm logits:",norm_logits)
           for c_id in range(beam_size):
             _, candidate = to_expand[c_id]
             logits = norm_logits[c_id]
-            print("logits",logits)
             sorted = list(enumerate(logits))
             sorted.sort(key=itemgetter(1), reverse=True)
 
@@ -1411,7 +1377,6 @@ class NLM(object):
                                                                     new_prob, tuple(candidate.get_subtoken_history()) +
                                                                     (test_dataset.rev_vocab[id],))))
 
-          print("====================== Completion Debugging Closed ==========================")
         # Get top and count rank of correct answer
         # if verbose: print('Correct_token:', correct_token)
         if verbose: print('Correct_token:', correct_token.replace('@@', ''), correct_token)
@@ -2243,7 +2208,8 @@ def main(_):
       print("Done testing!")
     elif FLAGS.completion:
       # Runs the code completion scenario and calculates MRR if dynamic adaptation is on it also adapts the model.
-      vocab_path = FLAGS.train_dir + "/vocab.txt"
+      t_dir = FLAGS.train_dir if FLAGS.train_dir else "."
+      vocab_path = t_dir + "/vocab.txt"
       train_vocab, train_vocab_rev = reader._read_vocab(vocab_path)
       config.vocab_size = len(train_vocab)
       start_time = time.time()
