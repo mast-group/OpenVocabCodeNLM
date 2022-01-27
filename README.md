@@ -29,3 +29,4 @@ pip install keras==2.6
 2. Adjusted the re-Shape for cost function, as a different format was required in tfa
 3. Adjusted the reshape for cost function for completion and perplexity separately
 4. Some prints (might be removed ...)
+5. Adjusted the loss-functions default behavior to not average out over batch (done later manually)

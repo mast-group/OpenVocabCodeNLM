@@ -62,7 +62,7 @@ TEST_PROJ_NAMES_FILE=testProjects
 ID_MAP_FILE=sample_data/java/id_map_java_test_slp_pre_bpe_10000
 
 # Maximum training epochs
-EPOCHS=5 # Normally this would be larger. For instance 30-50
+EPOCHS=2 # Normally this would be larger. For instance 30-50
 # Initial learning rate
 LR=0.1 # This is the default value. You can skip it if you don't want to change it.
 # Training batch size
