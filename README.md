@@ -23,6 +23,9 @@ I further had to manually (!) install a matching keras with pip:
 pip install keras==2.6
 ```
 
+This repository has **two** requirements.txt files - one is for windows, while the *reduced_requirements.txt* is for the docker-container.
+The precise windows versions where not available for the docker-ubuntu. 
+
 ## Changes
 
 1. Ran [Tensorflow Migration Skript](https://blog.tensorflow.org/2019/02/upgrading-your-code-to-tensorflow-2-0.html)
@@ -30,3 +33,4 @@ pip install keras==2.6
 3. Adjusted the reshape for cost function for completion and perplexity separately
 4. Some prints (might be removed ...)
 5. Adjusted the loss-functions default behavior to not average out over batch (done later manually)
+6. Added DockerFile & Reduced Requirements
