@@ -26,6 +26,12 @@ pip install keras==2.6
 This repository has **two** requirements.txt files - one is for windows, while the *reduced_requirements.txt* is for the docker-container.
 The precise windows versions where not available for the docker-ubuntu. 
 
+## Licence Warning
+
+The original OpenVocabCodeNLM has Apache Licence (same as this fork).
+
+But the used nvidia-container comes with an implicit licence agreement. Please study it carefully before using it.
+
 ## Changes
 
 1. Ran [Tensorflow Migration Skript](https://blog.tensorflow.org/2019/02/upgrading-your-code-to-tensorflow-2-0.html)
