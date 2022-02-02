@@ -1,3 +1,7 @@
+*.log
+python_overnight.sh
+java_overnight.sh
+
 .idea
 sample_data
 
