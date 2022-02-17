@@ -1,14 +1,23 @@
 # OpenVocabCodeNLM - Reproduction & Bump
 
-For an Experiment I wanted to reproduce OpenVocabNLM, 
-and while it worked fine with CPUs on my MacBook, 
-it failed on my Cuda11 Windows machine and the GPUs. 
-
-So this repository aims to bump the versions to be SOTA again, 
-with modern python, tensorflow and hopefully dockered. 
+This is an reproduction and adjustment of OpenVocabNLM.
+I ran into issues mostly with different versions and GPU-drivers, 
+so this repository aims to bump the versions to be SOTA again, 
+with modern python, tensorflow and docker. 
 
 Also see the [original Readme](./original_README.md).
 See the [original repository](https://github.com/mast-group/OpenVocabCodeNLM)
+
+
+## Changes
+
+1. Ran [Tensorflow Migration Skript](https://blog.tensorflow.org/2019/02/upgrading-your-code-to-tensorflow-2-0.html)
+2. Adjusted the re-Shape for cost function, as a different format was required in tfa
+3. Adjusted the reshape for cost function for completion and perplexity separately
+4. Some prints (might be removed ...)
+5. Adjusted the loss-functions default behavior to not average out over batch (done later manually)
+6. Added DockerFile & Reduced Requirements
+7. Changed some prints to be logging
 
 ## Environment
 
@@ -41,18 +50,9 @@ The original OpenVocabCodeNLM has Apache Licence (same as this fork).
 
 But the used nvidia-container comes with an implicit licence agreement. Please study it carefully before using it.
 
-## Changes
+## Troubleshooting 
 
-1. Ran [Tensorflow Migration Skript](https://blog.tensorflow.org/2019/02/upgrading-your-code-to-tensorflow-2-0.html)
-2. Adjusted the re-Shape for cost function, as a different format was required in tfa
-3. Adjusted the reshape for cost function for completion and perplexity separately
-4. Some prints (might be removed ...)
-5. Adjusted the loss-functions default behavior to not average out over batch (done later manually)
-6. Added DockerFile & Reduced Requirements
-
-# Troubleshooting 
-
-## Warnings / Errors in Python
+### Warnings / Errors in Python
 
 **Allocation exceeds free system memory**
 
@@ -66,7 +66,7 @@ This error is likely related to the Batchsize. It can occur in or outside of doc
 **Try reducing the batchsize**.
 For older graphics cards try ~64, for non-gpu try batch sizes from 16 upward.
 
-## Warnings in/with Docker
+### Warnings in/with Docker
 
 **FileNotFoundError**
 

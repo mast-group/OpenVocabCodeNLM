@@ -3,9 +3,7 @@ version: '3.8'
 services:
   experiment:
     image: ciselab/openvocabcodenlm
-    cpu_count: 8
     oom_kill_disable: true
-    oom_score_adj: 500
     volumes:
       - ./sample_data/java/:/data/java/
       - ./sample_data/java/model:/models
@@ -18,7 +16,7 @@ services:
       DO_COMPLETION: false
       VERBOSE: true
 
-      EPOCHS: 1
+      EPOCHS: 2
 
       BATCH_SIZE: 16
 
@@ -30,3 +28,9 @@ services:
       # For the dirs, be careful not to add "/" at the end, it will confuse the python
       DATA_HOME: /data/java
       MODEL_DIR: /models
+  
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
