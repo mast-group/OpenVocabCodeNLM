@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  experiment:
+    image: ciselab/openvocabcodenlm
+    oom_kill_disable: true
+    volumes:
+      - ./sample_data/java/:/data/java/
+      - ./sample_data/java/model:/models
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DO_TRAIN: true
+      DO_TEST: true
+      DO_COMPLETION: false
+      VERBOSE: true
+
+      EPOCHS: 2
+
+      BATCH_SIZE: 16
+
+      TRAIN_FILE: java_training_slp_pre_enc_bpe_10000
+      VALIDATION_FILE: java_validation_slp_pre_enc_bpe_10000
+      TEST_FILE: java_test_slp_pre_enc_bpe_10000
+      TEST_PROJ_NAMES_FILE: testProjects
+      ID_MAP_FILE: /data/java/id_map_java_test_slp_pre_bpe_10000
+      # For the dirs, be careful not to add "/" at the end, it will confuse the python
+      DATA_HOME: /data/java
+      MODEL_DIR: /models
+  
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]

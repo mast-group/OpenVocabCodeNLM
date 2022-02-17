@@ -1,0 +1,173 @@
+TensorFlow 2.0 Upgrade Script
+-----------------------------
+Converted 5 files
+Detected 12 issues that require attention
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+File: OpenVocabCodeNLM\code_nlm.py
+--------------------------------------------------------------------------------
+OpenVocabCodeNLM\code_nlm.py:35:8: ERROR: Using member tf.flags in deprecated module tf.flags. tf.flags and tf.app.flags have been removed, please use the argparse or absl modules if you need command line parsing.
+OpenVocabCodeNLM\code_nlm.py:137:32: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+OpenVocabCodeNLM\code_nlm.py:154:17: WARNING: Using member tf.contrib.rnn.DropoutWrapper in deprecated module tf.contrib.rnn. (Manual edit required) tf.contrib.rnn.* has been deprecated, and widely used cells/functions will be moved to tensorflow/addons repository. Please check it there and file Github issues if necessary.
+OpenVocabCodeNLM\code_nlm.py:154:17: ERROR: Using member tf.contrib.rnn.DropoutWrapper in deprecated module tf.contrib. tf.contrib.rnn.DropoutWrapper cannot be converted automatically. tf.contrib will not be distributed with TensorFlow 2.0, please consider an alternative in non-contrib TensorFlow, a community-maintained repository such as tensorflow/addons, or fork the required code.
+OpenVocabCodeNLM\code_nlm.py:156:17: WARNING: Using member tf.contrib.rnn.DropoutWrapper in deprecated module tf.contrib.rnn. (Manual edit required) tf.contrib.rnn.* has been deprecated, and widely used cells/functions will be moved to tensorflow/addons repository. Please check it there and file Github issues if necessary.
+OpenVocabCodeNLM\code_nlm.py:156:17: ERROR: Using member tf.contrib.rnn.DropoutWrapper in deprecated module tf.contrib. tf.contrib.rnn.DropoutWrapper cannot be converted automatically. tf.contrib will not be distributed with TensorFlow 2.0, please consider an alternative in non-contrib TensorFlow, a community-maintained repository such as tensorflow/addons, or fork the required code.
+OpenVocabCodeNLM\code_nlm.py:168:23: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+OpenVocabCodeNLM\code_nlm.py:169:23: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+OpenVocabCodeNLM\code_nlm.py:171:18: ERROR: Using member tf.contrib.legacy_seq2seq.sequence_loss_by_example in deprecated module tf.contrib. tf.contrib.legacy_seq2seq.sequence_loss_by_example cannot be converted automatically. tf.contrib will not be distributed with TensorFlow 2.0, please consider an alternative in non-contrib TensorFlow, a community-maintained repository such as tensorflow/addons, or fork the required code.
+OpenVocabCodeNLM\code_nlm.py:315:8: WARNING: *.save requires manual check. (This warning is only applicable if the code saves a tf.Keras model) Keras model.save now saves to the Tensorflow SavedModel format by default, instead of HDF5. To continue saving to HDF5, add the argument save_format='h5' to the save() function.
+OpenVocabCodeNLM\code_nlm.py:736:12: WARNING: *.save requires manual check. (This warning is only applicable if the code saves a tf.Keras model) Keras model.save now saves to the Tensorflow SavedModel format by default, instead of HDF5. To continue saving to HDF5, add the argument save_format='h5' to the save() function.
+OpenVocabCodeNLM\code_nlm.py:1701:12: WARNING: *.save requires manual check. (This warning is only applicable if the code saves a tf.Keras model) Keras model.save now saves to the Tensorflow SavedModel format by default, instead of HDF5. To continue saving to HDF5, add the argument save_format='h5' to the save() function.
+================================================================================
+Detailed log follows:
+
+================================================================================
+================================================================================
+Input tree: 'OpenVocabCodeNLM'
+================================================================================
+--------------------------------------------------------------------------------
+Processing file 'OpenVocabCodeNLM\\code_nlm.py'
+ outputting to 'OpenVocabCodeNLM_V2\\code_nlm.py'
+--------------------------------------------------------------------------------
+
+35:8: ERROR: Using member tf.flags in deprecated module tf.flags. tf.flags and tf.app.flags have been removed, please use the argparse or absl modules if you need command line parsing.
+102:12: INFO: Renamed 'tf.ConfigProto' to 'tf.compat.v1.ConfigProto'
+123:9: INFO: `name` passed to `name_scope`. Because you may be re-entering an existing scope, it is not safe to convert automatically,  the v2 name_scope does not support re-entering scopes by name.
+
+123:9: INFO: Renamed 'tf.name_scope' to 'tf.compat.v1.name_scope'
+125:27: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+126:30: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+128:9: INFO: `name` passed to `name_scope`. Because you may be re-entering an existing scope, it is not safe to convert automatically,  the v2 name_scope does not support re-entering scopes by name.
+
+128:9: INFO: Renamed 'tf.name_scope' to 'tf.compat.v1.name_scope'
+129:20: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+130:21: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+131:28: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+134:11: INFO: `name` passed to `name_scope`. Because you may be re-entering an existing scope, it is not safe to convert automatically,  the v2 name_scope does not support re-entering scopes by name.
+
+134:11: INFO: Renamed 'tf.name_scope' to 'tf.compat.v1.name_scope'
+136:37: INFO: Renamed 'tf.random_uniform' to 'tf.random.uniform'
+137:32: INFO: Added keywords to args of function 'tf.nn.embedding_lookup'
+137:32: WARNING: tf.nn.embedding_lookup requires manual check. `partition_strategy` has been removed from tf.nn.embedding_lookup.  The 'div' strategy will be used by default.
+138:32: INFO: Changing keep_prob arg of tf.nn.dropout to rate, and recomputing value.
+
+140:9: INFO: `name` passed to `name_scope`. Because you may be re-entering an existing scope, it is not safe to convert automatically,  the v2 name_scope does not support re-entering scopes by name.
+
+140:9: INFO: Renamed 'tf.name_scope' to 'tf.compat.v1.name_scope'
+143:41: INFO: Renamed 'tf.contrib.rnn.BasicLSTMCell' to 'tf.compat.v1.nn.rnn_cell.BasicLSTMCell'
+144:17: INFO: Renamed 'tf.contrib.rnn.BasicLSTMCell' to 'tf.compat.v1.nn.rnn_cell.BasicLSTMCell'
+144:103: INFO: Renamed 'tf.get_variable_scope' to 'tf.compat.v1.get_variable_scope'
+146:17: INFO: Renamed 'tf.contrib.rnn.BasicLSTMCell' to 'tf.compat.v1.nn.rnn_cell.BasicLSTMCell'
+148:41: INFO: Renamed 'tf.contrib.rnn.GRUCell' to 'tf.compat.v1.nn.rnn_cell.GRUCell'
+149:17: INFO: Renamed 'tf.contrib.rnn.GRUCell' to 'tf.compat.v1.nn.rnn_cell.GRUCell'
+149:59: INFO: Renamed 'tf.get_variable_scope' to 'tf.compat.v1.get_variable_scope'
+151:17: INFO: Renamed 'tf.contrib.rnn.GRUCell' to 'tf.compat.v1.nn.rnn_cell.GRUCell'
+154:17: WARNING: Using member tf.contrib.rnn.DropoutWrapper in deprecated module tf.contrib.rnn. (Manual edit required) tf.contrib.rnn.* has been deprecated, and widely used cells/functions will be moved to tensorflow/addons repository. Please check it there and file Github issues if necessary.
+154:17: ERROR: Using member tf.contrib.rnn.DropoutWrapper in deprecated module tf.contrib. tf.contrib.rnn.DropoutWrapper cannot be converted automatically. tf.contrib will not be distributed with TensorFlow 2.0, please consider an alternative in non-contrib TensorFlow, a community-maintained repository such as tensorflow/addons, or fork the required code.
+156:17: WARNING: Using member tf.contrib.rnn.DropoutWrapper in deprecated module tf.contrib.rnn. (Manual edit required) tf.contrib.rnn.* has been deprecated, and widely used cells/functions will be moved to tensorflow/addons repository. Please check it there and file Github issues if necessary.
+156:17: ERROR: Using member tf.contrib.rnn.DropoutWrapper in deprecated module tf.contrib. tf.contrib.rnn.DropoutWrapper cannot be converted automatically. tf.contrib will not be distributed with TensorFlow 2.0, please consider an alternative in non-contrib TensorFlow, a community-maintained repository such as tensorflow/addons, or fork the required code.
+159:19: INFO: Renamed 'tf.contrib.rnn.MultiRNNCell' to 'tf.compat.v1.nn.rnn_cell.MultiRNNCell'
+162:38: INFO: Renamed 'tf.nn.dynamic_rnn' to 'tf.compat.v1.nn.dynamic_rnn'
+165:9: INFO: `name` passed to `name_scope`. Because you may be re-entering an existing scope, it is not safe to convert automatically,  the v2 name_scope does not support re-entering scopes by name.
+
+165:9: INFO: Renamed 'tf.name_scope' to 'tf.compat.v1.name_scope'
+168:23: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+168:23: INFO: Renamed 'tf.get_variable' to 'tf.compat.v1.get_variable'
+169:23: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+169:23: INFO: Renamed 'tf.get_variable' to 'tf.compat.v1.get_variable'
+171:18: ERROR: Using member tf.contrib.legacy_seq2seq.sequence_loss_by_example in deprecated module tf.contrib. tf.contrib.legacy_seq2seq.sequence_loss_by_example cannot be converted automatically. tf.contrib will not be distributed with TensorFlow 2.0, please consider an alternative in non-contrib TensorFlow, a community-maintained repository such as tensorflow/addons, or fork the required code.
+173:18: INFO: Renamed 'tf.div' to 'tf.compat.v1.div'
+173:25: INFO: Added keywords to args of function 'tf.reduce_sum'
+178:9: INFO: `name` passed to `name_scope`. Because you may be re-entering an existing scope, it is not safe to convert automatically,  the v2 name_scope does not support re-entering scopes by name.
+
+178:9: INFO: Renamed 'tf.name_scope' to 'tf.compat.v1.name_scope'
+180:14: INFO: Renamed 'tf.trainable_variables' to 'tf.compat.v1.trainable_variables'
+181:49: INFO: Added keywords to args of function 'tf.gradients'
+183:18: INFO: Renamed 'tf.train.GradientDescentOptimizer' to 'tf.compat.v1.train.GradientDescentOptimizer'
+188:6: INFO: tf.summary.scalar requires manual check. The TF 1.x summary API cannot be automatically migrated to TF 2.0, so symbols have been converted to tf.compat.v1.summary.* and must be migrated manually. Typical usage will only require changes to the summary writing logic, not to individual calls like scalar(). For examples of the new summary API, see the Effective TF 2.0 migration document or check the TF 2.0 TensorBoard tutorials.
+188:6: INFO: Renamed 'tf.summary.scalar' to 'tf.compat.v1.summary.scalar'
+191:6: INFO: tf.summary.scalar requires manual check. The TF 1.x summary API cannot be automatically migrated to TF 2.0, so symbols have been converted to tf.compat.v1.summary.* and must be migrated manually. Typical usage will only require changes to the summary writing logic, not to individual calls like scalar(). For examples of the new summary API, see the Effective TF 2.0 migration document or check the TF 2.0 TensorBoard tutorials.
+191:6: INFO: Renamed 'tf.summary.scalar' to 'tf.compat.v1.summary.scalar'
+193:19: INFO: Renamed 'tf.train.Saver' to 'tf.compat.v1.train.Saver'
+193:34: INFO: Renamed 'tf.global_variables' to 'tf.compat.v1.global_variables'
+194:24: INFO: Renamed 'tf.initialize_all_variables' to 'tf.compat.v1.initialize_all_variables'
+195:21: INFO: tf.summary.merge_all requires manual check. The TF 1.x summary API cannot be automatically migrated to TF 2.0, so symbols have been converted to tf.compat.v1.summary.* and must be migrated manually. Typical usage will only require changes to the summary writing logic, not to individual calls like scalar(). For examples of the new summary API, see the Effective TF 2.0 migration document or check the TF 2.0 TensorBoard tutorials.
+195:21: INFO: Renamed 'tf.summary.merge_all' to 'tf.compat.v1.summary.merge_all'
+204:13: INFO: Renamed 'tf.trainable_variables' to 'tf.compat.v1.trainable_variables'
+265:21: INFO: tf.summary.FileWriter requires manual check. The TF 1.x summary API cannot be automatically migrated to TF 2.0, so symbols have been converted to tf.compat.v1.summary.* and must be migrated manually. Typical usage will only require changes to the summary writing logic, not to individual calls like scalar(). For examples of the new summary API, see the Effective TF 2.0 migration document or check the TF 2.0 TensorBoard tutorials.
+265:21: INFO: Renamed 'tf.summary.FileWriter' to 'tf.compat.v1.summary.FileWriter'
+315:8: WARNING: *.save requires manual check. (This warning is only applicable if the code saves a tf.Keras model) Keras model.save now saves to the Tensorflow SavedModel format by default, instead of HDF5. To continue saving to HDF5, add the argument save_format='h5' to the save() function.
+317:35: INFO: Renamed 'tf.Summary' to 'tf.compat.v1.Summary'
+318:35: INFO: Renamed 'tf.Summary' to 'tf.compat.v1.Summary'
+439:20: INFO: Renamed 'tf.train.checkpoint_exists' to 'tf.compat.v1.train.checkpoint_exists'
+538:20: INFO: Renamed 'tf.train.checkpoint_exists' to 'tf.compat.v1.train.checkpoint_exists'
+642:11: INFO: Renamed 'tf.train.checkpoint_exists' to 'tf.compat.v1.train.checkpoint_exists'
+695:17: INFO: Renamed 'tf.train.checkpoint_exists' to 'tf.compat.v1.train.checkpoint_exists'
+736:12: WARNING: *.save requires manual check. (This warning is only applicable if the code saves a tf.Keras model) Keras model.save now saves to the Tensorflow SavedModel format by default, instead of HDF5. To continue saving to HDF5, add the argument save_format='h5' to the save() function.
+744:20: INFO: Renamed 'tf.train.checkpoint_exists' to 'tf.compat.v1.train.checkpoint_exists'
+1010:22: INFO: Renamed 'tf.train.checkpoint_exists' to 'tf.compat.v1.train.checkpoint_exists'
+1609:11: INFO: Renamed 'tf.train.checkpoint_exists' to 'tf.compat.v1.train.checkpoint_exists'
+1661:17: INFO: Renamed 'tf.train.checkpoint_exists' to 'tf.compat.v1.train.checkpoint_exists'
+1701:12: WARNING: *.save requires manual check. (This warning is only applicable if the code saves a tf.Keras model) Keras model.save now saves to the Tensorflow SavedModel format by default, instead of HDF5. To continue saving to HDF5, add the argument save_format='h5' to the save() function.
+1712:20: INFO: Renamed 'tf.train.checkpoint_exists' to 'tf.compat.v1.train.checkpoint_exists'
+2054:9: INFO: Renamed 'tf.Session' to 'tf.compat.v1.Session'
+2069:14: INFO: Renamed 'tf.train.checkpoint_exists' to 'tf.compat.v1.train.checkpoint_exists'
+2074:16: INFO: Renamed 'tf.global_variables_initializer' to 'tf.compat.v1.global_variables_initializer'
+2124:13: INFO: Renamed 'tf.Session' to 'tf.compat.v1.Session'
+2148:13: INFO: Renamed 'tf.Session' to 'tf.compat.v1.Session'
+2173:13: INFO: Renamed 'tf.Session' to 'tf.compat.v1.Session'
+2204:13: INFO: Renamed 'tf.Session' to 'tf.compat.v1.Session'
+2243:13: INFO: Renamed 'tf.Session' to 'tf.compat.v1.Session'
+2268:13: INFO: Renamed 'tf.Session' to 'tf.compat.v1.Session'
+2331:4: INFO: Renamed 'tf.app.run' to 'tf.compat.v1.app.run'
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file 'OpenVocabCodeNLM\\create_subtoken_data.py'
+ outputting to 'OpenVocabCodeNLM_V2\\create_subtoken_data.py'
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file 'OpenVocabCodeNLM\\non-ascii_sequences_to_unk.py'
+ outputting to 'OpenVocabCodeNLM_V2\\non-ascii_sequences_to_unk.py'
+--------------------------------------------------------------------------------
+
+ERROR: Failed to parse.
+Traceback (most recent call last):
+  File "C:\Users\Leonh\anaconda3\envs\OpenVocabCodeNLM_Bumped\lib\site-packages\tensorflow\tools\compatibility\ast_edits.py", line 940, in update_string_pasta
+    t = pasta.parse(text)
+  File "C:\Users\Leonh\anaconda3\envs\OpenVocabCodeNLM_Bumped\lib\site-packages\pasta\__init__.py", line 23, in parse
+    t = ast_utils.parse(src)
+  File "C:\Users\Leonh\anaconda3\envs\OpenVocabCodeNLM_Bumped\lib\site-packages\pasta\base\ast_utils.py", line 56, in parse
+    tree = ast.parse(sanitize_source(src))
+  File "C:\Users\Leonh\anaconda3\envs\OpenVocabCodeNLM_Bumped\lib\ast.py", line 50, in parse
+    return compile(source, filename, mode, flags,
+  File "<unknown>", line 24
+    print 'Usage non-ascii_sequences_to_unk.py source_file destination_file'
+          ^
+SyntaxError: Missing parentheses in call to 'print'. Did you mean print('Usage non-ascii_sequences_to_unk.py source_file destination_file')?
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file 'OpenVocabCodeNLM\\reader.py'
+ outputting to 'OpenVocabCodeNLM_V2\\reader.py'
+--------------------------------------------------------------------------------
+
+80:9: INFO: Renamed 'tf.gfile.GFile' to 'tf.io.gfile.GFile'
+92:9: INFO: Renamed 'tf.gfile.GFile' to 'tf.io.gfile.GFile'
+109:9: INFO: Renamed 'tf.gfile.GFile' to 'tf.io.gfile.GFile'
+125:9: INFO: Renamed 'tf.gfile.GFile' to 'tf.io.gfile.GFile'
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file 'OpenVocabCodeNLM\\util\\identifier_mapping.py'
+ outputting to 'OpenVocabCodeNLM_V2\\util\\identifier_mapping.py'
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+

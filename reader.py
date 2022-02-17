@@ -77,7 +77,7 @@ def _read_words(filename):
   :return: The whitespace tokenized version of the specified file.
   """
   with tf.device('/cpu:0'):
-    with tf.gfile.GFile(filename, "r") as f:
+    with tf.io.gfile.GFile(filename, "r") as f:
       return f.read().decode("utf-8").strip().split()
 
 
@@ -89,7 +89,7 @@ def _read_lines(filename):
   :return: A list of the specified file's lines.
   """
   with tf.device('/cpu:0'):
-    with tf.gfile.GFile(filename, "r") as f:
+    with tf.io.gfile.GFile(filename, "r") as f:
       ret = []
       for l in f:
         ret.append(l.decode("utf8").strip())
@@ -106,7 +106,7 @@ def _read_vocab(filename):
   with tf.device('/cpu:0'):
     word_to_id = {}
     id_to_word = {}
-    with tf.gfile.GFile(filename, "r") as ff:
+    with tf.io.gfile.GFile(filename, "r") as ff:
       for line in ff:
         word, iden = line.strip().split('\t')
         iden = int(iden)
@@ -122,7 +122,7 @@ def _write_vocab(vocab, filename):
   :param filename: Path to the file in which the vocabulary will be saved.
   """
   with tf.device('/cpu:0'):
-    with tf.gfile.GFile(filename, "w") as ff:
+    with tf.io.gfile.GFile(filename, "w") as ff:
       for w, wid in vocab.items():
         ff.write(w + "\t" + str(wid) + "\n")
 
